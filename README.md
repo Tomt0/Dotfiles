@@ -1,6 +1,6 @@
 # Tomt0's Dotfiles
 
-Arch Linux desktop — Hyprland · Catppuccin Mocha · Waybar · Walker · SDDM
+Arch Linux desktop — Hyprland · Catppuccin Mocha · Waybar · Walker
 
 ## Install
 
@@ -12,10 +12,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Tomt0/Dotfiles/main/install.
 
 This will:
 - Install all packages (pacman + AUR via yay)
-- Set up GPU drivers, services, gaming optimizations, zram, SDDM theme
+- Set up services, gaming optimizations, and zram
 - Clone this repo and apply all configs to the right locations
 - Copy wallpapers to `~/Pictures/Wallpapers/`
-- Apply the GTK Catppuccin theme
 
 ## Included Configs
 
@@ -60,3 +59,9 @@ This will:
 ├── .zshrc
 └── .tmux.conf
 ```
+
+## Credits
+
+Based on the original dotfiles by [ViegPhunt](https://github.com/ViegPhunt) — check out their work:
+- [ViegPhunt/Arch-Hyprland](https://github.com/ViegPhunt/Arch-Hyprland)
+- [ViegPhunt/Dotfiles](https://github.com/ViegPhunt/Dotfiles)

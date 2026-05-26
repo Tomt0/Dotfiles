@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
-# ViegPhunt — Arch Linux Desktop Install Script
+# Arch Linux Desktop Install Script
 # Hyprland · Catppuccin Mocha · Waybar · Walker
+#
+# Based on the original work by ViegPhunt
+# https://github.com/ViegPhunt/Arch-Hyprland
 
 set -uo pipefail
 
