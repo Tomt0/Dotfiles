@@ -25,7 +25,7 @@ command -v pacman &>/dev/null || die "This script requires Arch Linux."
 
 PACMAN_PACKAGES=(
     # Hyprland & Wayland core
-    hyprland hypridle hyprlock hyprpaper hyprpolkitagent hyprshot
+    hyprland hypridle hyprlock hyprpolkitagent hyprshot
     waybar swaync grim slurp kanshi swaybg
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
     xdg-utils xdg-user-dirs
@@ -245,7 +245,7 @@ install_packages() {
     section "Pacman packages"
 
     pacman_group "Hyprland core" \
-        hyprland hypridle hyprlock hyprpaper hyprpolkitagent hyprshot \
+        hyprland hypridle hyprlock hyprpolkitagent hyprshot \
         waybar swaync grim slurp kanshi swaybg \
         xdg-desktop-portal-hyprland xdg-desktop-portal-gtk xdg-utils \
         xdg-user-dirs
@@ -627,7 +627,7 @@ setup_dotfiles() {
 main() {
     echo -e "${BOLD}${CYAN}"
     echo "  ╔════════════════════════════════════════════╗"
-    echo "  ║   ViegPhunt Desktop Install — Arch Linux  ║"
+    echo "  ║     Tomt0's Desktop Install — Arch Linux  ║"
     echo "  ║   Hyprland · Catppuccin Mocha · Waybar    ║"
     echo "  ╚════════════════════════════════════════════╝"
     echo -e "${RESET}"
