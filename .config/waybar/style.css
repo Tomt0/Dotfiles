@@ -52,6 +52,8 @@ tooltip {
 #tray,
 #bluetooth,
 #network,
+#backlight,
+#power-profiles-daemon,
 #battery,
 #pulseaudio,
 #clock {
@@ -63,6 +65,8 @@ tooltip {
 #custom-power:hover,
 #bluetooth:hover,
 #network:hover,
+#backlight:hover,
+#power-profiles-daemon:hover,
 #battery:hover,
 #pulseaudio:hover,
 #clock:hover {
@@ -77,6 +81,15 @@ tooltip {
 
 #network {
     color: @green;
+}
+
+#backlight {
+    color: @yellow;
+}
+
+#power-profiles-daemon {
+    color: @teal;
+    font-size: 16px;
 }
 
 #battery {

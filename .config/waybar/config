@@ -1,7 +1,7 @@
 {
     "modules-left": ["custom/power", "hyprland/workspaces"],
     // "modules-center": [],
-    "modules-right": ["tray", "bluetooth", "network", "battery", "pulseaudio", "clock"],
+    "modules-right": ["tray", "bluetooth", "network", "backlight", "power-profiles-daemon", "battery", "pulseaudio", "clock"],
 
     "custom/power": {
         "format" : "⭘ ",
@@ -36,6 +36,25 @@
         "format-linked": "  Linked (No IP)",
         "format-disconnected": "  Disconnected",
         "tooltip": false,
+    },
+
+    "backlight": {
+        "format": "{icon} {percent}%",
+        "format-icons": ["󰃞", "󰃟", "󰃠"],
+        "on-scroll-up": "brightnessctl set +5%",
+        "on-scroll-down": "brightnessctl set 5%-",
+        "tooltip": false,
+    },
+
+    "power-profiles-daemon": {
+        "format": "{icon}",
+        "tooltip-format": "{profile}",
+        "format-icons": {
+            "default":      "󰾆",
+            "performance":  "󰾅",
+            "balanced":     "󰾆",
+            "power-saver":  "󰾁",
+        },
     },
 
     "battery": {
