@@ -11,5 +11,5 @@ quick_activate = []
 
 [providers]
 max_results = 256
-default = ["desktopapplications"]
-empty = ["menus:categories"]
+default = ["applications"]
+empty = ["applications"]
