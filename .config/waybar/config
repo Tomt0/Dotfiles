@@ -1,7 +1,7 @@
 {
     "modules-left": ["custom/power", "hyprland/workspaces"],
     // "modules-center": [],
-    "modules-right": ["group/tray-drawer", "custom/updates", "bluetooth", "backlight", "custom/power-toggle", "network", "battery", "pulseaudio", "clock"],
+    "modules-right": ["group/tray-drawer", "bluetooth", "backlight", "custom/power-toggle", "network", "custom/updates", "battery", "pulseaudio", "clock"],
 
     "custom/power": {
         "format" : "⭘ ",
@@ -42,6 +42,7 @@
         "return-type": "json",
         "interval": 600,
         "tooltip": true,
+        "on-click": "ghostty -e sudo pacman -Syu",
     },
 
     "bluetooth": {
