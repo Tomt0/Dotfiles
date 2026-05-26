@@ -1,7 +1,7 @@
 Name = "system"
 NamePretty = "System"
 HideFromProviderlist = true
-History = true
+FixedOrder = true
 
 -- Exclude terminal emulators and file managers (they live in the main search)
 local EXCLUDE_CATS = { TerminalEmulator=true, FileManager=true }
@@ -46,6 +46,18 @@ end
 function GetEntries()
   local apps, seen = {}, {}
 
+  table.insert(apps, {
+    Text    = "SDDM Theme",
+    Icon    = "preferences-desktop-theme",
+    Subtext = "Change login screen theme",
+    SubMenu = "sddm",
+  })
+  table.insert(apps, {
+    Text    = "SDDM Wallpaper",
+    Icon    = "preferences-desktop-wallpaper",
+    Subtext = "Change login screen wallpaper",
+    SubMenu = "sddm_wallpaper",
+  })
 
   for _, dir in ipairs({ os.getenv("HOME") .. "/.local/share/applications", "/usr/share/applications" }) do
     local h = io.popen("find '" .. dir .. "' -maxdepth 1 -name '*.desktop' 2>/dev/null | sort")
