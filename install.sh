@@ -206,8 +206,11 @@ resolve_conflicts() {
         return
     fi
     info "Removing: ${to_remove[*]}"
-    sudo pacman -Rns --noconfirm "${to_remove[@]}" 2>&1 && ok "Conflicts removed" \
-        || warn "Some packages could not be removed — continuing"
+    for pkg in "${to_remove[@]}"; do
+        sudo systemctl disable --now "$pkg" 2>/dev/null || true
+        sudo pacman -Rns --noconfirm "$pkg" 2>&1 && ok "Removed $pkg" \
+            || warn "Could not remove $pkg — continuing"
+    done
 }
 
 # ─── 2. Packages ──────────────────────────────────────────────────────────────
@@ -538,6 +541,10 @@ EOF
 # ─── 7. Display manager ───────────────────────────────────────────────────────
 setup_display_manager() {
     section "Display manager"
+
+    for dm in ly lightdm lxdm greetd; do
+        sudo systemctl disable --now "$dm" 2>/dev/null || true
+    done
 
     sudo systemctl enable sddm
     ok "sddm enabled"
