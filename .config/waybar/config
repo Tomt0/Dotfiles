@@ -1,7 +1,7 @@
 {
     "modules-left": ["custom/power", "hyprland/workspaces"],
     // "modules-center": [],
-    "modules-right": ["tray", "bluetooth", "network", "backlight", "power-profiles-daemon", "battery", "pulseaudio", "clock"],
+    "modules-right": ["group/tray-drawer", "bluetooth", "backlight", "custom/power-toggle", "network", "battery", "pulseaudio", "clock"],
 
     "custom/power": {
         "format" : "⭘ ",
@@ -17,6 +17,20 @@
         "cursor": true,
     },
 
+    "group/tray-drawer": {
+        "orientation": "horizontal",
+        "drawer": {
+            "transition-duration": 300,
+            "transition-left-to-right": true,
+        },
+        "modules": ["custom/tray-arrow", "tray"],
+    },
+
+    "custom/tray-arrow": {
+        "format": "❯",
+        "tooltip": false,
+    },
+
     "tray": {
         "icon-size": 20,
         "spacing": 10,
@@ -24,9 +38,9 @@
     },
 
     "bluetooth": {
-        "format": " 󰂯 ",
-        "format-disabled": " 󰂲 ",
-        "format-connected": " 󰂱 ",
+        "format": "󰂯",
+        "format-disabled": "󰂲",
+        "format-connected": "󰂱",
         "on-click": "blueman-manager",
     },
 
@@ -39,22 +53,19 @@
     },
 
     "backlight": {
-        "format": "{icon} {percent}%",
+        "format": "{icon}",
         "format-icons": ["󰃞", "󰃟", "󰃠"],
         "on-scroll-up": "brightnessctl set +5%",
         "on-scroll-down": "brightnessctl set 5%-",
-        "tooltip": false,
+        "tooltip-format": "{percent}%",
     },
 
-    "power-profiles-daemon": {
-        "format": "{icon}",
-        "tooltip-format": "{profile}",
-        "format-icons": {
-            "default":      "󰾆",
-            "performance":  "󰾅",
-            "balanced":     "󰾆",
-            "power-saver":  "󰾁",
-        },
+    "custom/power-toggle": {
+        "exec": "~/.config/viegphunt/power_toggle.sh --status",
+        "return-type": "json",
+        "interval": 3,
+        "on-click": "~/.config/viegphunt/power_toggle.sh",
+        "tooltip": true,
     },
 
     "battery": {

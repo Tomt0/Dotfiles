@@ -53,7 +53,7 @@ tooltip {
 #bluetooth,
 #network,
 #backlight,
-#power-profiles-daemon,
+#custom-power-toggle,
 #battery,
 #pulseaudio,
 #clock {
@@ -66,7 +66,7 @@ tooltip {
 #bluetooth:hover,
 #network:hover,
 #backlight:hover,
-#power-profiles-daemon:hover,
+#custom-power-toggle:hover,
 #battery:hover,
 #pulseaudio:hover,
 #clock:hover {
@@ -76,7 +76,8 @@ tooltip {
 #bluetooth {
     color: @yellow;
     font-size: 18px;
-    padding: 0 2px;
+    padding: 0;
+    min-width: 28px;
 }
 
 #network {
@@ -85,11 +86,20 @@ tooltip {
 
 #backlight {
     color: @yellow;
+    font-size: 16px;
+    padding: 0;
+    min-width: 28px;
 }
 
-#power-profiles-daemon {
+#custom-power-toggle {
     color: @teal;
-    font-size: 16px;
+    font-size: 18px;
+    padding: 0;
+    min-width: 28px;
+}
+
+#custom-power-toggle.power-saver {
+    color: @green;
 }
 
 #battery {
@@ -108,4 +118,15 @@ tooltip {
 #custom-power {
     margin-left: 10px;
     padding: 0px 10px 0 15px;
+}
+
+#custom-tray-arrow {
+    color: @foreground;
+    font-size: 18px;
+    padding: 0;
+    min-width: 28px;
+}
+
+#custom-tray-arrow:hover {
+    background-color: alpha(@select, 0.6);
 }

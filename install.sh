@@ -787,7 +787,27 @@ EOF
     ok "Power auto-switch rules installed (AC=performance, battery=powersave)"
 }
 
-# ─── 12. Default apps ─────────────────────────────────────────────────────────
+# ─── 12. Waybar hardware config ───────────────────────────────────────────────
+configure_waybar() {
+    section "Waybar hardware config"
+    local config="$HOME/.config/waybar/config"
+    [[ -f "$config" ]] || return
+
+    if [[ "$IS_LAPTOP" -eq 1 ]]; then
+        ok "Laptop — waybar laptop modules kept"
+        return
+    fi
+
+    # Desktop: strip laptop-only modules from modules-right
+    sed -i \
+        -e 's/, "backlight"//g' \
+        -e 's/, "custom\/power-toggle"//g' \
+        -e 's/, "battery"//g' \
+        "$config"
+    ok "Desktop — laptop modules removed from waybar"
+}
+
+# ─── 13. Default apps ─────────────────────────────────────────────────────────
 setup_default_apps() {
     section "Default applications"
     xdg-mime default nemo.desktop inode/directory
@@ -822,6 +842,7 @@ main() {
         setup_dotfiles_apply
         apply_themes
     fi
+    configure_waybar
     setup_default_apps
 
     echo ""
