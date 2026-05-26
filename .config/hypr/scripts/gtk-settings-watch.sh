@@ -10,10 +10,12 @@ apply_cursor() {
     [ -z "$theme" ] && return
 
     sed -i "s/^env = XCURSOR_THEME,.*/env = XCURSOR_THEME,$theme/" "$ENV_CONF"
+    sed -i "s/^env = HYPRCURSOR_THEME,.*/env = HYPRCURSOR_THEME,$theme/" "$ENV_CONF"
     [ -n "$size" ] && sed -i "s/^env = XCURSOR_SIZE,.*/env = XCURSOR_SIZE,$size/" "$ENV_CONF"
     [ -n "$size" ] && sed -i "s/^env = HYPRCURSOR_SIZE,.*/env = HYPRCURSOR_SIZE,$size/" "$ENV_CONF"
 
     hyprctl keyword env "XCURSOR_THEME,$theme" 2>/dev/null
+    hyprctl keyword env "HYPRCURSOR_THEME,$theme" 2>/dev/null
     [ -n "$size" ] && hyprctl keyword env "XCURSOR_SIZE,$size" 2>/dev/null
     hyprctl setcursor "$theme" "${size:-24}" 2>/dev/null
     hyprctl reload 2>/dev/null

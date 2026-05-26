@@ -276,7 +276,7 @@ install_packages() {
         npm python-pip python-pipx rustup github-cli
 
     pacman_group "CLI tools" bat eza fd fzf zoxide lazygit lazydocker \
-        fastfetch htop btop inotify-tools smartmontools
+        fastfetch htop btop inotify-tools smartmontools pacman-contrib
 
     pacman_group "Media" obs-studio ffmpeg cava playerctl
 

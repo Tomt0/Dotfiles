@@ -1,7 +1,7 @@
 {
     "modules-left": ["custom/power", "hyprland/workspaces"],
     // "modules-center": [],
-    "modules-right": ["group/tray-drawer", "bluetooth", "backlight", "custom/power-toggle", "network", "battery", "pulseaudio", "clock"],
+    "modules-right": ["group/tray-drawer", "custom/updates", "bluetooth", "backlight", "custom/power-toggle", "network", "battery", "pulseaudio", "clock"],
 
     "custom/power": {
         "format" : "⭘ ",
@@ -35,6 +35,13 @@
         "icon-size": 20,
         "spacing": 10,
         "cursor": true,
+    },
+
+    "custom/updates": {
+        "exec": "~/.config/viegphunt/update_check.sh",
+        "return-type": "json",
+        "interval": 600,
+        "tooltip": true,
     },
 
     "bluetooth": {
