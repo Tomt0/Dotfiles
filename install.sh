@@ -632,20 +632,33 @@ setup_shell() {
 # ─── 10. Dotfiles ─────────────────────────────────────────────────────────────
 setup_dotfiles() {
     section "Dotfiles"
-    echo ""
-    warn "Copy these manually after install:"
-    echo "    ~/.config/hypr/        → Hyprland"
-    echo "    ~/.config/waybar/      → Bar"
-    echo "    ~/.config/swaync/      → Notifications"
-    echo "    ~/.config/walker/      → App launcher"
-    echo "    ~/.config/gtk-3.0/     → GTK3"
-    echo "    ~/.config/gtk-4.0/     → GTK4"
-    echo "    ~/.config/qt6ct/       → Qt6 theming"
-    echo "    ~/.config/rofi/        → Rofi"
-    echo "    ~/.zshrc               → Shell"
-    echo ""
-    warn "Then run: ~/.config/viegphunt/gtkthemes.sh"
-    echo ""
+
+    local repo="https://github.com/Tomt0/Dotfiles.git"
+    local dotfiles="$HOME/dotfiles"
+
+    if [[ -d "$dotfiles/.git" ]]; then
+        info "Dotfiles repo already present — pulling latest..."
+        git -C "$dotfiles" pull --ff-only
+    else
+        info "Cloning dotfiles..."
+        git clone "$repo" "$dotfiles"
+    fi
+
+    info "Applying configs to ~/.config/ ..."
+    rsync -a --exclude='*.swp' "$dotfiles/.config/" "$HOME/.config/"
+    ok ".config applied"
+
+    for f in .zshrc .tmux.conf; do
+        [[ -f "$dotfiles/$f" ]] && cp "$dotfiles/$f" "$HOME/$f" && ok "$f applied"
+    done
+
+    info "Copying wallpapers to ~/Pictures/Wallpapers/ ..."
+    mkdir -p "$HOME/Pictures/Wallpapers"
+    rsync -a "$dotfiles/wallpapers/" "$HOME/Pictures/Wallpapers/"
+    ok "Wallpapers applied"
+
+    info "Applying GTK theme..."
+    bash "$HOME/.config/viegphunt/gtkthemes.sh" && ok "GTK theme applied"
 }
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
