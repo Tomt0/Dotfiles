@@ -2,7 +2,8 @@
 
 # Tomt0 Dotfiles — Apply Script
 # For users who already have Hyprland set up.
-# Backs up existing configs and replaces them with these dotfiles.
+# Detects conflicting tools, removes them, backs up existing configs,
+# and replaces everything with these dotfiles.
 
 set -uo pipefail
 
@@ -19,6 +20,17 @@ section() { echo -e "\n${BOLD}${CYAN}══ $* ══${RESET}"; }
 command -v pacman &>/dev/null || die "This script requires Arch Linux."
 command -v hyprctl &>/dev/null || die "Hyprland doesn't appear to be installed."
 command -v yay &>/dev/null    || die "yay is required. Install it first: https://github.com/Jguer/yay"
+
+# ─── Conflict map ─────────────────────────────────────────────────────────────
+# Each entry: "replacement:pkg1 pkg2 ..."
+# Any installed pkg in the list gets removed; replacement is what takes over.
+declare -A CONFLICTS=(
+    ["walker"]="rofi rofi-wayland rofi-emoji wofi bemenu fuzzel tofi"
+    ["awww"]="swww swaybg hyprpaper feh nitrogen mpvpaper"
+    ["swaync"]="mako dunst"
+    ["hyprlock"]="swaylock swaylock-effects waylock gtklock"
+    ["waybar"]="eww yambar"
+)
 
 # ─── Packages needed for these dotfiles ───────────────────────────────────────
 PACMAN_DEPS=(
@@ -44,15 +56,12 @@ PACMAN_DEPS=(
     wl-clipboard cliphist
     brightnessctl playerctl
     grim slurp
-    rofi-wayland
-    yad
-    inotify-tools
-    libvips
+    yad inotify-tools libvips
     wlogout
 )
 
 AUR_DEPS=(
-    # Wallpaper daemon (used by lock screen and scripts)
+    # Wallpaper daemon
     awww
 
     # App launcher + backend
@@ -89,6 +98,7 @@ echo "  ╚═══════════════════════
 echo -e "${RESET}"
 
 echo -e "${YELLOW}  This script will:${RESET}"
+echo "    • Detect and remove tools that conflict with these dotfiles"
 echo "    • Install packages required by these dotfiles"
 echo "    • Back up your existing ~/.config entries to ~/.config-backup-<timestamp>"
 echo "    • Replace configs for: hypr, waybar, swaync, walker, ghostty,"
@@ -97,11 +107,54 @@ echo "      wlogout, cava, mpv, nwg-look, waypaper, viegphunt scripts"
 echo ""
 echo -e "${YELLOW}  Your monitors.conf will NOT be touched.${RESET}"
 echo ""
+
+# ─── Conflict scan (runs before prompt so user can see what will be removed) ──
+scan_conflicts() {
+    local found=0
+    for replacement in "${!CONFLICTS[@]}"; do
+        for pkg in ${CONFLICTS[$replacement]}; do
+            if pacman -Qi "$pkg" &>/dev/null; then
+                warn "Conflict: $pkg will be removed → replaced by $replacement"
+                found=1
+            fi
+        done
+    done
+    [[ $found -eq 1 ]] && echo ""
+}
+
+scan_conflicts
+
 read -rp "  Continue? [y/N] " _confirm
 [[ "$_confirm" =~ ^[Yy]$ ]] || { info "Aborted."; exit 0; }
 echo ""
 
-# ─── 1. Install dependencies ──────────────────────────────────────────────────
+# ─── 1. Resolve conflicts ─────────────────────────────────────────────────────
+resolve_conflicts() {
+    section "Resolving conflicts"
+
+    local to_remove=()
+    for replacement in "${!CONFLICTS[@]}"; do
+        for pkg in ${CONFLICTS[$replacement]}; do
+            if pacman -Qi "$pkg" &>/dev/null; then
+                to_remove+=("$pkg")
+            fi
+        done
+    done
+
+    if [[ ${#to_remove[@]} -eq 0 ]]; then
+        ok "No conflicts found"
+        return
+    fi
+
+    info "Removing: ${to_remove[*]}"
+    if sudo pacman -Rns --noconfirm "${to_remove[@]}" 2>&1; then
+        ok "Conflicts removed"
+    else
+        warn "Some packages could not be removed — continuing anyway"
+    fi
+}
+
+# ─── 2. Install dependencies ──────────────────────────────────────────────────
 install_deps() {
     section "Installing dependencies"
 
@@ -118,7 +171,7 @@ install_deps() {
     ok "Dependencies done"
 }
 
-# ─── 2. Backup ────────────────────────────────────────────────────────────────
+# ─── 3. Backup ────────────────────────────────────────────────────────────────
 backup_configs() {
     section "Backing up existing configs"
 
@@ -145,7 +198,7 @@ backup_configs() {
     ok "Backup saved to $backup"
 }
 
-# ─── 3. Apply configs ─────────────────────────────────────────────────────────
+# ─── 4. Apply configs ─────────────────────────────────────────────────────────
 apply_configs() {
     section "Applying configs"
 
@@ -190,7 +243,7 @@ apply_configs() {
     ok "Wallpaper and screenshot directories created"
 }
 
-# ─── 4. Viegphunt scripts ─────────────────────────────────────────────────────
+# ─── 5. Viegphunt scripts ─────────────────────────────────────────────────────
 setup_scripts() {
     section "Viegphunt scripts"
 
@@ -329,7 +382,7 @@ EOF
     ok "Scripts written"
 }
 
-# ─── 5. Apply themes ──────────────────────────────────────────────────────────
+# ─── 6. Apply themes ──────────────────────────────────────────────────────────
 apply_themes() {
     section "Applying themes"
 
@@ -340,7 +393,7 @@ apply_themes() {
     bash "$HOME/.config/viegphunt/setcursor.sh" && ok "Cursor theme applied"
 }
 
-# ─── 6. Wayland session entry ─────────────────────────────────────────────────
+# ─── 7. Wayland session entry ─────────────────────────────────────────────────
 setup_session_entry() {
     section "Wayland session entry"
 
@@ -364,6 +417,7 @@ EOF
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 main() {
+    resolve_conflicts
     install_deps
     backup_configs
     apply_configs
