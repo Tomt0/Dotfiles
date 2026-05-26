@@ -3,7 +3,6 @@ NamePretty = "SDDM Wallpaper"
 HideFromProviderlist = true
 FixedOrder = false
 
-local THEME_DIR = "/usr/share/sddm/themes/sddm-astronaut-theme"
 local EXTS = { png=true, jpg=true, jpeg=true, webp=true, gif=true, mp4=true, mkv=true }
 
 local function add_images(entries, dir, label_prefix)
@@ -34,7 +33,6 @@ end
 
 function GetEntries()
   local entries = {}
-  add_images(entries, THEME_DIR .. "/Backgrounds", "")
   add_images(entries, os.getenv("HOME") .. "/Pictures/Wallpapers", "")
   return entries
 end

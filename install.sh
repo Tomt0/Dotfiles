@@ -549,6 +549,14 @@ Current=sddm-astronaut-theme
 EOF
     ok "SDDM theme set to sddm-astronaut-theme"
 
+    local bg_src="/usr/share/sddm/themes/sddm-astronaut-theme/Backgrounds"
+    local wp_dir="$HOME/Pictures/Wallpapers"
+    mkdir -p "$wp_dir"
+    if [[ -d "$bg_src" ]]; then
+        cp -n "$bg_src"/* "$wp_dir/" 2>/dev/null
+        ok "SDDM bundled wallpapers copied to ~/Pictures/Wallpapers"
+    fi
+
     local session_file="/usr/share/wayland-sessions/hyprland-uwsm.desktop"
     if [[ ! -f "$session_file" ]]; then
         sudo mkdir -p /usr/share/wayland-sessions
