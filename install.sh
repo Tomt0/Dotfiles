@@ -127,6 +127,10 @@ fi
 
 read -rp "  Continue? [y/N] " _confirm
 [[ "$_confirm" =~ ^[Yy]$ ]] || { info "Aborted."; exit 0; }
+
+read -rp "  Is this a laptop? [y/N] " _is_laptop
+IS_LAPTOP=0
+[[ "$_is_laptop" =~ ^[Yy]$ ]] && IS_LAPTOP=1
 echo ""
 
 # ─── 0. Multilib ──────────────────────────────────────────────────────────────
@@ -739,7 +743,51 @@ apply_themes() {
     bash "$HOME/.config/viegphunt/setcursor.sh" && ok "Cursor theme applied"
 }
 
-# ─── 11. Default apps ─────────────────────────────────────────────────────────
+# ─── 11. Laptop utilities ─────────────────────────────────────────────────────
+setup_laptop() {
+    [[ "$IS_LAPTOP" -eq 0 ]] && return
+    section "Laptop utilities"
+
+    sudo pacman -S --needed --noconfirm power-profiles-daemon iio-sensor-proxy upower
+    ok "Laptop packages installed"
+
+    sudo systemctl enable --now power-profiles-daemon
+    sudo systemctl enable --now iio-sensor-proxy
+    ok "Laptop services enabled"
+
+    sudo tee /usr/local/bin/power-mode-ac > /dev/null << 'EOF'
+#!/bin/bash
+for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+    echo performance > "$gov"
+done
+sysctl -w vm.swappiness=10
+EOF
+    sudo chmod +x /usr/local/bin/power-mode-ac
+
+    sudo tee /usr/local/bin/power-mode-battery > /dev/null << 'EOF'
+#!/bin/bash
+for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+    echo powersave > "$gov"
+done
+sysctl -w vm.swappiness=60
+EOF
+    sudo chmod +x /usr/local/bin/power-mode-battery
+
+    sudo tee /etc/udev/rules.d/99-power-mode.rules > /dev/null << 'EOF'
+SUBSYSTEM=="power_supply", KERNEL=="ACAD", ATTR{online}=="1", RUN+="/usr/local/bin/power-mode-ac"
+SUBSYSTEM=="power_supply", KERNEL=="ACAD", ATTR{online}=="0", RUN+="/usr/local/bin/power-mode-battery"
+EOF
+
+    sudo tee /etc/udev/rules.d/99-power-profile.rules > /dev/null << 'EOF'
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/usr/bin/powerprofilesctl set performance"
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/usr/bin/powerprofilesctl set power-saver"
+EOF
+
+    sudo udevadm control --reload-rules
+    ok "Power auto-switch rules installed (AC=performance, battery=powersave)"
+}
+
+# ─── 12. Default apps ─────────────────────────────────────────────────────────
 setup_default_apps() {
     section "Default applications"
     xdg-mime default nemo.desktop inode/directory
@@ -760,6 +808,7 @@ main() {
 
     install_packages
     enable_services
+    setup_laptop
     setup_gaming
     setup_logind
     setup_zram
