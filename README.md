@@ -1,40 +1,62 @@
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=JetbrainsMono+Nerd+Font&weight=600&size=35&duration=2000&pause=2000&color=F7F7F7&width=435&lines=ViegPhunt's+Dotfiles)](https://git.io/typing-svg)
-### This repository contains **all of my personal dotfiles**
+# Tomt0's Dotfiles
 
-## 📦 Included Configurations
-This repository includes configuration for:
-- **Window Managers**: `Hyprland`
-- **Terminals**: `ghostty`
-- **Shells**: `zsh`
-- **Prompt**: `oh-my-posh`
-- **Editors**: `neovim`
-- **Multiplexer**: `tmux`
-- **Status Bar**: `waybar`
-- **Notifications**: `swaync`
-- **Launcher**: `rofi`
-- **Logout menu**: `wlogout`
-- **Audio visualizer**: `cava`
+Arch Linux desktop — Hyprland · Catppuccin Mocha · Waybar · Walker · SDDM
 
-## 📂 Structure
+## Install
 
-```plaintext
+Run this from a fresh Arch install (as your regular user, not root):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Tomt0/Dotfiles/main/install.sh)
+```
+
+This will:
+- Install all packages (pacman + AUR via yay)
+- Set up GPU drivers, services, gaming optimizations, zram, SDDM theme
+- Clone this repo and apply all configs to the right locations
+- Copy wallpapers to `~/Pictures/Wallpapers/`
+- Apply the GTK Catppuccin theme
+
+## Included Configs
+
+| App | Purpose |
+|-----|---------|
+| Hyprland | Window manager |
+| Waybar | Status bar |
+| swaync | Notifications |
+| Walker + Elephant | App launcher |
+| Ghostty | Terminal |
+| Zsh + oh-my-posh | Shell + prompt |
+| Neovim | Editor |
+| Tmux | Multiplexer |
+| Rofi | Emoji / clipboard picker |
+| wlogout | Logout menu |
+| cava | Audio visualizer |
+| nwg-look / qt6ct | GTK + Qt theming |
+
+## Structure
+
+```
 .
 ├── .config/
 │   ├── cava/
-│   ├── colors/         # Color schemes
+│   ├── colors/
 │   ├── fontconfig/
 │   ├── ghostty/
+│   ├── gtk-3.0/
+│   ├── gtk-4.0/
 │   ├── hypr/
 │   ├── nvim/
 │   ├── ohmyposh/
+│   ├── qt6ct/
 │   ├── rofi/
 │   ├── swaync/
-│   ├── viegphunt/      # Personal scripts
+│   ├── viegphunt/      # Scripts (launcher, wallpaper, lock, etc.)
+│   ├── walker/
 │   ├── waybar/
 │   └── wlogout/
-├── .stow-local-ignore  # Stow ignore list
-├── .tmux.conf
+├── wallpapers/
+├── install.sh
 ├── .zshrc
-├── LICENSE             # License
-└── README.md           # This file
+└── .tmux.conf
 ```
