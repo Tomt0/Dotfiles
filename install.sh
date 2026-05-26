@@ -631,6 +631,13 @@ setup_dotfiles_apply() {
     info "Copying wallpapers..."
     rsync -a "$dotfiles/wallpapers/" "$HOME/Pictures/Wallpapers/"
     ok "Wallpapers applied"
+
+    if pgrep -x walker &>/dev/null; then
+        pkill -x walker
+        sleep 0.5
+        walker --gapplication-service &
+        ok "Walker restarted"
+    fi
 }
 
 # ─── 10. Apply themes ─────────────────────────────────────────────────────────
