@@ -23,15 +23,15 @@ command -v pacman &>/dev/null || die "This script requires Arch Linux."
 PACMAN_PACKAGES=(
     # Hyprland & Wayland core
     hyprland hypridle hyprlock hyprpaper hyprpolkitagent hyprshot
-    waybar swaync grim slurp awww kanshi swaybg
+    waybar swaync grim slurp kanshi swaybg
     xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
-    xdg-utils
+    xdg-utils xdg-user-dirs
     # Note: xdg-desktop-portal-wlr conflicts with xdg-desktop-portal-kde.
     # It is installed below only if kde portal is not already present.
 
-    # Qt / KDE theming support (needed for QT_QPA_PLATFORMTHEME=kde)
+    # Qt theming (qt5ct/qt6ct + kvantum style engine)
     qt5ct qt6ct qt5-wayland qt6-wayland
-    plasma-desktop plasma-workspace
+    kvantum kvantum-qt5
 
 
     # Terminal & shell
@@ -41,10 +41,13 @@ PACMAN_PACKAGES=(
     ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk
 
     # Theming
-    nwg-look papirus-icon-theme
+    nwg-look papirus-icon-theme gtk-engine-murrine
+
+    # Audio
+    wireplumber
 
     # Polkit
-    polkit-gnome lxsession
+    polkit-gnome
 
     # File manager & desktop utils
     nemo gvfs gvfs-afc gvfs-mtp gvfs-smb ark
@@ -113,6 +116,7 @@ PACMAN_PACKAGES=(
 AUR_PACKAGES=(
     # Hyprland extras
     wlogout
+    awww
 
     # App launcher
     walker
@@ -131,6 +135,7 @@ AUR_PACKAGES=(
     # Theming
     catppuccin-gtk-theme-mocha
     catppuccin-qt5ct-git
+    kvantum-theme-catppuccin-git
     ttf-segoe-ui-variable
     whitesur-icon-theme
     moga-neon-cursor-theme
@@ -234,20 +239,21 @@ install_packages() {
 
     pacman_group "Hyprland core" \
         hyprland hypridle hyprlock hyprpaper hyprpolkitagent hyprshot \
-        waybar swaync grim slurp awww kanshi swaybg \
-        xdg-desktop-portal-hyprland xdg-desktop-portal-gtk xdg-utils
+        waybar swaync grim slurp kanshi swaybg \
+        xdg-desktop-portal-hyprland xdg-desktop-portal-gtk xdg-utils \
+        xdg-user-dirs
 
-    pacman_group "KDE/Qt theming" \
+    pacman_group "Qt theming" \
         qt5ct qt6ct qt5-wayland qt6-wayland \
-        plasma-desktop plasma-workspace
+        kvantum kvantum-qt5
 
     pacman_group "Terminal & shell" ghostty zsh zsh-completions tmux
 
     pacman_group "Fonts" ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk
 
-    pacman_group "Theming" nwg-look papirus-icon-theme
+    pacman_group "Theming" nwg-look papirus-icon-theme gtk-engine-murrine
 
-    pacman_group "Polkit" polkit-gnome lxsession
+    pacman_group "Polkit" polkit-gnome
 
     pacman_group "File manager" nemo gvfs gvfs-afc gvfs-mtp gvfs-smb ark \
         loupe celluloid evince gnome-disk-utility gnome-text-editor gnome-characters
@@ -256,7 +262,7 @@ install_packages() {
 
     pacman_group "Bluetooth" bluez bluez-utils blueman
 
-    pacman_group "Audio" pipewire-audio pipewire-pulse pavucontrol alsa-firmware sof-firmware
+    pacman_group "Audio" pipewire-audio pipewire-pulse wireplumber pavucontrol alsa-firmware sof-firmware
 
     pacman_group "Clipboard" cliphist wl-clipboard
 
