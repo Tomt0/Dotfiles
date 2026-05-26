@@ -351,7 +351,25 @@ EOF
     ok "hugepages + realtime audio priority configured"
 }
 
-# ─── 5. zram ──────────────────────────────────────────────────────────────────
+# ─── 5. logind power key ──────────────────────────────────────────────────────
+setup_logind() {
+    section "logind power key"
+    local conf="/etc/systemd/logind.conf.d/power-key.conf"
+    if [[ -f "$conf" ]]; then
+        ok "logind power-key config already present"
+        return
+    fi
+    sudo mkdir -p /etc/systemd/logind.conf.d
+    sudo tee "$conf" > /dev/null << 'EOF'
+[Login]
+HandlePowerKey=ignore
+HandlePowerKeyLongPress=ignore
+EOF
+    sudo systemctl restart systemd-logind
+    ok "logind set to ignore power key — Hyprland will handle it"
+}
+
+# ─── 6. zram ──────────────────────────────────────────────────────────────────
 setup_zram() {
     section "zram swap"
     if [[ -f /etc/systemd/zram-generator.conf ]]; then
@@ -708,6 +726,7 @@ main() {
     install_packages
     enable_services
     setup_gaming
+    setup_logind
     setup_zram
     setup_scripts
     setup_display_manager
