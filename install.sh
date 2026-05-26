@@ -33,8 +33,6 @@ PACMAN_PACKAGES=(
     qt5ct qt6ct qt5-wayland qt6-wayland
     plasma-desktop plasma-workspace
 
-    # Display manager
-    sddm
 
     # Terminal & shell
     ghostty zsh zsh-completions tmux
@@ -137,7 +135,6 @@ AUR_PACKAGES=(
     whitesur-icon-theme
     moga-neon-cursor-theme
     apple_cursor
-    sddm-astronaut-theme
     tint
 
     # Shell prompt
@@ -350,8 +347,7 @@ enable_services() {
     sudo systemctl enable --now bluetooth
     sudo systemctl enable --now firewalld
     sudo systemctl enable --now cups
-    sudo systemctl enable sddm
-    systemctl --user enable --now gamemode 2>/dev/null || true
+systemctl --user enable --now gamemode 2>/dev/null || true
     ok "Services enabled (sddm will start on next boot)"
 }
 
@@ -389,19 +385,7 @@ EOF
     ok "zram configured (ram/2, zstd)"
 }
 
-# ─── 7. SDDM theme ────────────────────────────────────────────────────────────
-setup_sddm() {
-    section "SDDM astronaut theme"
-
-    sudo mkdir -p /etc/sddm.conf.d
-    sudo tee /etc/sddm.conf.d/theme.conf > /dev/null << 'EOF'
-[Theme]
-Current=sddm-astronaut-theme
-EOF
-    ok "SDDM theme set to sddm-astronaut-theme"
-}
-
-# ─── 8. Scripts ───────────────────────────────────────────────────────────────
+# ─── 7. Scripts ───────────────────────────────────────────────────────────────
 setup_scripts() {
     section "viegphunt scripts"
 
@@ -678,7 +662,6 @@ main() {
     enable_services
     setup_gaming
     setup_zram
-    setup_sddm
     setup_scripts
     setup_terminal
     setup_shell
