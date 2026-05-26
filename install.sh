@@ -40,6 +40,7 @@ declare -A CONFLICTS=(
     ["swaync"]="mako dunst"
     ["hyprlock"]="swaylock swaylock-effects waylock gtklock"
     ["waybar"]="eww yambar"
+    ["sddm"]="ly lightdm lxdm greetd"
 )
 
 # ─── Package lists ────────────────────────────────────────────────────────────
@@ -557,8 +558,24 @@ setup_dotfiles_fresh() {
 setup_dotfiles_apply() {
     section "Dotfiles"
 
+    # When run via curl (bash <(curl ...)) BASH_SOURCE[0] is a file descriptor,
+    # not a directory. Fall back to cloning/pulling the repo in that case.
     local dotfiles
-    dotfiles="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
+    if [[ -d "$script_dir/.config/hypr" ]]; then
+        dotfiles="$script_dir"
+    else
+        local repo="https://github.com/Tomt0/Dotfiles.git"
+        dotfiles="$HOME/dotfiles"
+        if [[ -d "$dotfiles/.git" ]]; then
+            info "Pulling latest dotfiles..."
+            git -C "$dotfiles" pull --ff-only
+        else
+            info "Cloning dotfiles..."
+            git clone "$repo" "$dotfiles"
+        fi
+    fi
 
     info "Backing up existing configs..."
     local backup="$HOME/.config-backup-$(date +%Y%m%d-%H%M%S)"
