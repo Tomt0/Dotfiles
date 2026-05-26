@@ -656,9 +656,8 @@ main() {
 
     if [[ "$MODE" == "fresh" ]]; then
         install_yay
-    else
-        resolve_conflicts
     fi
+    resolve_conflicts
 
     install_packages
     enable_services
