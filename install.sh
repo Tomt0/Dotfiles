@@ -120,6 +120,7 @@ AUR_PACKAGES=(
     # Hyprland extras
     wlogout
     awww
+    uwsm
 
     # App launcher
     walker
@@ -300,6 +301,8 @@ install_packages() {
     pacman_group "Firewall" firewall-config
 
     pacman_group "Misc" flatpak fuse2 dpkg zram-generator yad man-db unzip zip keepass
+
+    pacman_group "Display manager" sddm
 
     if [[ "${SKIP_WLR_PORTAL:-0}" -eq 0 ]]; then
         pacman_group "WLR portal" xdg-desktop-portal-wlr
@@ -566,6 +569,27 @@ EOF
     ok "gtk-settings-watch.sh written to $hypr_scripts"
 }
 
+# ─── 8. Display manager ───────────────────────────────────────────────────────
+setup_display_manager() {
+    section "Display manager (SDDM + UWSM session entry)"
+
+    sudo systemctl enable sddm
+    ok "sddm enabled"
+
+    local session_dir="/usr/share/wayland-sessions"
+    sudo mkdir -p "$session_dir"
+
+    sudo tee "$session_dir/hyprland-uwsm.desktop" > /dev/null << 'EOF'
+[Desktop Entry]
+Name=Hyprland (UWSM)
+Comment=An intelligent dynamic tiling Wayland compositor
+Exec=uwsm start -- hyprland
+DesktopNames=Hyprland
+Type=Application
+EOF
+    ok "Wayland session entry written to $session_dir/hyprland-uwsm.desktop"
+}
+
 # ─── 9. Default shell ─────────────────────────────────────────────────────────
 setup_shell() {
     section "Default shell"
@@ -652,6 +676,7 @@ main() {
     setup_gaming
     setup_zram
     setup_scripts
+    setup_display_manager
     setup_shell
     setup_dotfiles
 
