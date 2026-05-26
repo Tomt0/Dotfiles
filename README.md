@@ -1,4 +1,5 @@
 # Tomt0's Dotfiles
+this whole repo was made by ai fyi, i just made this so i dont need to configue hyprland every time
 
 Arch Linux desktop — Hyprland · Catppuccin Mocha Sapphire · Waybar · Walker
 
