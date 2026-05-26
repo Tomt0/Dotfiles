@@ -71,10 +71,6 @@ PACMAN_PACKAGES=(
     # Input method
     fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool fcitx5-bamboo
 
-    # Rofi (used for app launcher, emoji, clipboard popups)
-    rofi-wayland
-    rofi-emoji
-
     # Brightness (media keys — also useful for monitors with DDC/CI)
     brightnessctl
 
@@ -276,8 +272,6 @@ install_packages() {
 
     pacman_group "Input method" fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool fcitx5-bamboo
 
-    pacman_group "Rofi" rofi-wayland rofi-emoji
-
     pacman_group "Brightness" brightnessctl
 
     pacman_group "Wallpaper" libvips
@@ -389,22 +383,19 @@ setup_scripts() {
     # ── App launcher (Super+A) ────────────────────────────────────────────────
     cat > "$dir/app_launcher.sh" << 'EOF'
 #!/usr/bin/env bash
-if pidof rofi > /dev/null; then pkill rofi; fi
-rofi -show drun
+walker
 EOF
 
     # ── Clipboard picker (Super+V) ────────────────────────────────────────────
     cat > "$dir/clipboard_launcher.sh" << 'EOF'
 #!/usr/bin/env bash
-if pidof rofi > /dev/null; then pkill rofi; fi
-cliphist list | rofi -dmenu -p "Clipboard" | cliphist decode | wl-copy
+walker -m clipboard
 EOF
 
     # ── Emoji picker (Super+.) ────────────────────────────────────────────────
     cat > "$dir/emoji_launcher.sh" << 'EOF'
 #!/usr/bin/env bash
-if pidof rofi > /dev/null; then pkill rofi; fi
-rofi -show emoji
+walker -m emojis
 EOF
 
     # ── Lock screen (Super+L) ─────────────────────────────────────────────────
@@ -505,14 +496,7 @@ EOF
     # ── Wallpaper selector ────────────────────────────────────────────────────
     cat > "$dir/wallpaper_select.sh" << 'EOF'
 #!/usr/bin/env bash
-if pidof rofi > /dev/null; then pkill rofi; fi
-wallpapers_dir="$HOME/Pictures/Wallpapers"
-selected_wallpaper=$(for a in "$wallpapers_dir"/*; do
-    echo -en "$(basename "${a%.*}")\0icon\x1f$a\n"
-done | rofi -dmenu -p " ")
-image_fullname_path=$(find "$wallpapers_dir" -type f -name "$selected_wallpaper.*" | head -n 1)
-awww img "$image_fullname_path" --transition-type any --transition-duration 2
-~/.config/viegphunt/wallpaper_effects.sh
+waypaper
 EOF
 
     # ── Random wallpaper (Super+Shift+W) ──────────────────────────────────────
