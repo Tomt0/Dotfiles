@@ -19,6 +19,20 @@ apply_cursor() {
     hyprctl reload 2>/dev/null
 }
 
+restart_polkit() {
+    pkill -x polkit-gnome-authenticat 2>/dev/null
+    sleep 0.3
+    /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
+}
+
+_prev_gtk_theme=""
+
 inotifywait -m -e close_write "$SETTINGS" 2>/dev/null | while read -r; do
     apply_cursor
+
+    _cur_gtk_theme=$(grep -oP '(?<=gtk-theme-name=)\S+' "$SETTINGS")
+    if [ -n "$_cur_gtk_theme" ] && [ "$_cur_gtk_theme" != "$_prev_gtk_theme" ]; then
+        _prev_gtk_theme="$_cur_gtk_theme"
+        restart_polkit
+    fi
 done
