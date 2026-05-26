@@ -62,7 +62,7 @@ AUR_PACKAGES=(
     # Theming
     sddm-astronaut-theme
     catppuccin-gtk-theme-mocha catppuccin-qt5ct-git kvantum-theme-catppuccin-git
-    ttf-segoe-ui-variable whitesur-icon-theme moga-neon-cursor-theme apple_cursor tint
+    ttf-segoe-ui-variable whitesur-icon-theme bibata-cursor-theme apple_cursor tint
 
     # Shell prompt
     oh-my-posh
@@ -440,7 +440,7 @@ EOF
 mkdir -p ~/.icons/default/
 cat > ~/.icons/default/index.theme << 'THEME'
 [icon theme]
-Inherits=Moga-Neon-Cyan
+Inherits=Bibata-Modern-Ice
 THEME
 sudo mkdir -p /usr/share/icons/default
 sudo cp ~/.icons/default/index.theme /usr/share/icons/default/index.theme
