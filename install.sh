@@ -712,6 +712,14 @@ apply_themes() {
     bash "$HOME/.config/viegphunt/setcursor.sh" && ok "Cursor theme applied"
 }
 
+# ─── 11. Default apps ─────────────────────────────────────────────────────────
+setup_default_apps() {
+    section "Default applications"
+    xdg-mime default nemo.desktop inode/directory
+    xdg-mime default nemo.desktop application/x-gnome-saved-search
+    ok "Nemo set as default file manager"
+}
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 main() {
     enable_multilib
@@ -738,6 +746,7 @@ main() {
         setup_dotfiles_apply
         apply_themes
     fi
+    setup_default_apps
 
     echo ""
     echo -e "${BOLD}${GREEN}  ✓ Done!${RESET}"
