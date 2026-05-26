@@ -439,6 +439,15 @@ rm -f "$destination_wallpaper_dir/normal.png"
 vipsthumbnail "$current_wallpaper_path" -o "$destination_wallpaper_dir/normal.png"
 EOF
 
+    cat > "$dir/walker_start.sh" << 'EOF'
+#!/usr/bin/env bash
+for i in $(seq 1 30); do
+    elephant query "menus:categories;;1" 2>/dev/null | grep -q 'text:' && break
+    sleep 1
+done
+exec walker --gapplication-service
+EOF
+
     chmod +x "$dir"/*.sh
     mkdir -p "$HOME/Pictures/Wallpapers" "$HOME/Pictures/Screenshots"
     ok "Scripts written to $dir"
