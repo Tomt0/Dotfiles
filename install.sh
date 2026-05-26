@@ -93,8 +93,7 @@ PACMAN_PACKAGES=(
     obs-studio ffmpeg cava playerctl
 
     # Gaming / performance
-    gamemode steam
-    retroarch retroarch-assets-ozone retroarch-assets-xmb
+    gamemode
 
     # Security / CTF tools
     strace ltrace binwalk checksec upx
@@ -126,13 +125,12 @@ AUR_PACKAGES=(
 
     # Browsers
     brave-bin
-    zen-browser-bin
 
     # Editors & IDEs
-    visual-studio-code-bin
     sublime-text-4
 
     # Theming
+    sddm-astronaut-theme
     catppuccin-gtk-theme-mocha
     catppuccin-qt5ct-git
     kvantum-theme-catppuccin-git
@@ -150,13 +148,10 @@ AUR_PACKAGES=(
 
     # Communication
     spotify
-    legcord
-    arrpc
 
     # Gaming
     xpadneo-dkms
     balatro-mod-manager-bin
-    dolphin-emu
 
     # Fun CLI
     pokemon-colorscripts-git
@@ -167,7 +162,6 @@ AUR_PACKAGES=(
     # Misc
     localsend
     ani-cli
-    crunchyroll
     ascii
     neocities
 
@@ -286,7 +280,7 @@ install_packages() {
 
     pacman_group "Media" obs-studio ffmpeg cava playerctl
 
-    pacman_group "Gaming" gamemode steam retroarch retroarch-assets-ozone retroarch-assets-xmb
+    pacman_group "Gaming" gamemode
 
     pacman_group "Security tools" strace ltrace binwalk checksec upx
 
@@ -559,6 +553,13 @@ setup_display_manager() {
 
     sudo systemctl enable sddm
     ok "sddm enabled"
+
+    sudo mkdir -p /etc/sddm.conf.d
+    sudo tee /etc/sddm.conf.d/theme.conf > /dev/null << 'EOF'
+[Theme]
+Current=sddm-astronaut-theme
+EOF
+    ok "SDDM theme set to sddm-astronaut-theme"
 
     local session_dir="/usr/share/wayland-sessions"
     sudo mkdir -p "$session_dir"
