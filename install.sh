@@ -41,6 +41,7 @@ declare -A CONFLICTS=(
     ["hyprlock"]="swaylock swaylock-effects waylock gtklock"
     ["waybar"]="eww yambar"
     ["sddm"]="ly lightdm lxdm greetd"
+    ["polkit-gnome"]="polkit-kde-agent hyprpolkitagent mate-polkit pantheon-polkit-agent deepin-polkit-agent"
 )
 
 # ─── Package lists ────────────────────────────────────────────────────────────
