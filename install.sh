@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ViegPhunt — Arch Linux Desktop Install Script
-# Hyprland · Catppuccin Mocha · Waybar · Walker · SDDM
+# Hyprland · Catppuccin Mocha · Waybar · Walker
 
 set -uo pipefail
 
@@ -217,42 +217,6 @@ install_yay() {
     ok "yay installed"
 }
 
-# ─── 2. GPU drivers ───────────────────────────────────────────────────────────
-install_gpu_drivers() {
-    section "GPU drivers"
-
-    local gpu_vendor="unknown"
-    if lspci 2>/dev/null | grep -qi "nvidia"; then
-        gpu_vendor="nvidia"
-    elif lspci 2>/dev/null | grep -qiE "amd|radeon|advanced micro devices.*graphics"; then
-        gpu_vendor="amd"
-    elif lspci 2>/dev/null | grep -qiE "intel.*(graphics|uhd|iris|arc|xe)"; then
-        gpu_vendor="intel"
-    fi
-
-    case "$gpu_vendor" in
-        intel)
-            info "Detected Intel GPU — installing mesa, vulkan-intel, intel-media-driver"
-            sudo pacman -S --needed --noconfirm mesa vulkan-intel intel-media-driver
-            ok "Intel GPU drivers installed"
-            ;;
-        amd)
-            info "Detected AMD GPU — installing mesa, vulkan-radeon, libva-mesa-driver"
-            sudo pacman -S --needed --noconfirm mesa vulkan-radeon libva-mesa-driver
-            ok "AMD GPU drivers installed"
-            ;;
-        nvidia)
-            info "Detected NVIDIA GPU — installing nvidia-open, nvidia-utils"
-            sudo pacman -S --needed --noconfirm nvidia-open nvidia-utils
-            ok "NVIDIA drivers installed"
-            ;;
-        *)
-            warn "Could not detect GPU vendor — skipping driver install"
-            warn "Install manually: mesa + vulkan-intel / vulkan-radeon / nvidia-open"
-            ;;
-    esac
-}
-
 # ─── 3. Packages ──────────────────────────────────────────────────────────────
 install_packages() {
     local failed=()
@@ -276,8 +240,6 @@ install_packages() {
     pacman_group "KDE/Qt theming" \
         qt5ct qt6ct qt5-wayland qt6-wayland \
         plasma-desktop plasma-workspace
-
-    pacman_group "Display manager" sddm
 
     pacman_group "Terminal & shell" ghostty zsh zsh-completions tmux
 
@@ -354,8 +316,7 @@ enable_services() {
     sudo systemctl enable --now firewalld
     sudo systemctl enable --now cups
     systemctl --user enable --now gamemode 2>/dev/null || true
-    sudo systemctl enable sddm
-    ok "Services enabled (sddm will start on next boot)"
+    ok "Services enabled"
 }
 
 # ─── 4. Gaming optimizations ──────────────────────────────────────────────────
@@ -641,7 +602,6 @@ main() {
     enable_multilib
     check_conflicts
     install_yay
-    install_gpu_drivers
     install_packages
     enable_services
     setup_gaming
@@ -653,7 +613,7 @@ main() {
     echo ""
     echo -e "${BOLD}${GREEN}  ✓ Installation complete!${RESET}"
     echo ""
-    echo "  Reboot to start SDDM and log into Hyprland."
+    echo "  Reboot and log into Hyprland."
     echo ""
 }
 
