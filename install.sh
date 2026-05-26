@@ -74,7 +74,7 @@ AUR_PACKAGES=(
     spotify
 
     # Gaming
-    xpadneo-dkms balatro-mod-manager-bin
+    xpadneo-dkms
 
     # Fun CLI
     pokemon-colorscripts-git pipes.sh cbonsai cmatrix

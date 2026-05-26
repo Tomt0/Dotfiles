@@ -80,7 +80,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Tomt0/Dotfiles/main/install.
 | Theming | sddm-astronaut-theme, catppuccin-gtk-theme-mocha, catppuccin-qt5ct-git, kvantum-theme-catppuccin-git, ttf-segoe-ui-variable, whitesur-icon-theme, moga-neon-cursor-theme, apple_cursor, tint |
 | Wallpaper | waypaper |
 | Communication | spotify, localsend |
-| Gaming | xpadneo-dkms, balatro-mod-manager-bin |
+| Gaming | xpadneo-dkms |
 | Fun CLI | pokemon-colorscripts-git, pipes.sh, cbonsai, cmatrix, ani-cli, ascii, neocities |
 
 ## Keybindings
