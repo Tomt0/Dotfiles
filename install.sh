@@ -42,6 +42,7 @@ declare -A CONFLICTS=(
     ["waybar"]="eww yambar"
     ["sddm"]="ly lightdm lxdm greetd"
     ["polkit-gnome"]="polkit-kde-agent hyprpolkitagent mate-polkit pantheon-polkit-agent deepin-polkit-agent"
+    ["pipewire-audio"]="pulseaudio pulseaudio-alsa pulseaudio-bluetooth jack2 jack"
 )
 
 # ─── Package lists ────────────────────────────────────────────────────────────
@@ -142,7 +143,24 @@ enable_multilib() {
     ok "Package databases refreshed and system upgraded"
 }
 
-# ─── 0b. Portal conflict check ────────────────────────────────────────────────
+# ─── 0b. Firewall detection ───────────────────────────────────────────────────
+check_firewall() {
+    section "Firewall check"
+    SKIP_FIREWALL=0
+    if systemctl is-active --quiet ufw || systemctl is-enabled --quiet ufw 2>/dev/null; then
+        warn "ufw is active — skipping firewalld installation"
+        SKIP_FIREWALL=1
+    elif systemctl is-active --quiet nftables || systemctl is-enabled --quiet nftables 2>/dev/null; then
+        warn "nftables is active — skipping firewalld installation"
+        SKIP_FIREWALL=1
+    elif systemctl is-active --quiet iptables || systemctl is-enabled --quiet iptables 2>/dev/null; then
+        warn "iptables is active — skipping firewalld installation"
+        SKIP_FIREWALL=1
+    fi
+    [[ "$SKIP_FIREWALL" -eq 0 ]] && ok "No existing firewall detected — will install firewalld"
+}
+
+# ─── 0c. Portal conflict check ────────────────────────────────────────────────
 check_portal_conflicts() {
     section "Portal conflict check"
     SKIP_WLR_PORTAL=0
@@ -225,7 +243,13 @@ install_packages() {
     pacman_group "File manager" nemo gvfs gvfs-afc gvfs-mtp gvfs-smb ark \
         loupe celluloid evince gnome-disk-utility gnome-text-editor gnome-characters
 
-    pacman_group "Networking" networkmanager network-manager-applet wpa_supplicant firewalld
+    pacman_group "Networking" networkmanager network-manager-applet wpa_supplicant
+
+    if [[ "${SKIP_FIREWALL:-0}" -eq 0 ]]; then
+        pacman_group "Firewall" firewalld firewall-config
+    else
+        info "Skipping firewalld — existing firewall detected"
+    fi
 
     pacman_group "Bluetooth" bluez bluez-utils blueman
 
@@ -254,8 +278,6 @@ install_packages() {
     pacman_group "Security tools" strace ltrace binwalk checksec upx
 
     pacman_group "Printing" cups cups-pk-helper system-config-printer
-
-    pacman_group "Firewall" firewall-config
 
     pacman_group "Misc" flatpak fuse2 dpkg zram-generator yad man-db unzip zip keepass
 
@@ -293,8 +315,21 @@ enable_services() {
     else
         sudo systemctl enable --now NetworkManager
     fi
-    sudo systemctl enable --now bluetooth
-    sudo systemctl enable --now firewalld
+    if systemctl list-unit-files bluetooth.service &>/dev/null \
+      && ! systemctl is-masked --quiet bluetooth; then
+        sudo systemctl enable --now bluetooth
+        ok "Bluetooth enabled"
+    else
+        warn "bluetooth.service masked or unavailable — skipping"
+    fi
+
+    if [[ "${SKIP_FIREWALL:-0}" -eq 0 ]]; then
+        sudo systemctl enable --now firewalld
+        ok "firewalld enabled"
+    else
+        warn "Skipping firewalld — existing firewall left in place"
+    fi
+
     sudo systemctl enable --now cups
     systemctl --user enable --now gamemode 2>/dev/null || true
     elephant service enable 2>/dev/null || true
@@ -662,6 +697,7 @@ apply_themes() {
 # ─── Main ─────────────────────────────────────────────────────────────────────
 main() {
     enable_multilib
+    check_firewall
     check_portal_conflicts
 
     if [[ "$MODE" == "fresh" ]]; then
