@@ -221,28 +221,34 @@ install_yay() {
 install_gpu_drivers() {
     section "GPU drivers"
 
-    echo "  Select your GPU (for Vulkan + VA-API on a fresh install):"
-    echo "    1) Intel  (iGPU / Arc)"
-    echo "    2) AMD"
-    echo "    3) NVIDIA (open kernel module)"
-    echo "    4) Skip   (already installed / VM)"
-    read -rp "  Choice [1-4]: " gpu_choice
+    local gpu_vendor="unknown"
+    if lspci 2>/dev/null | grep -qi "nvidia"; then
+        gpu_vendor="nvidia"
+    elif lspci 2>/dev/null | grep -qiE "amd|radeon|advanced micro devices.*graphics"; then
+        gpu_vendor="amd"
+    elif lspci 2>/dev/null | grep -qiE "intel.*(graphics|uhd|iris|arc|xe)"; then
+        gpu_vendor="intel"
+    fi
 
-    case "$gpu_choice" in
-        1)
+    case "$gpu_vendor" in
+        intel)
+            info "Detected Intel GPU — installing mesa, vulkan-intel, intel-media-driver"
             sudo pacman -S --needed --noconfirm mesa vulkan-intel intel-media-driver
             ok "Intel GPU drivers installed"
             ;;
-        2)
+        amd)
+            info "Detected AMD GPU — installing mesa, vulkan-radeon, libva-mesa-driver"
             sudo pacman -S --needed --noconfirm mesa vulkan-radeon libva-mesa-driver
             ok "AMD GPU drivers installed"
             ;;
-        3)
+        nvidia)
+            info "Detected NVIDIA GPU — installing nvidia-open, nvidia-utils"
             sudo pacman -S --needed --noconfirm nvidia-open nvidia-utils
             ok "NVIDIA drivers installed"
             ;;
         *)
-            warn "Skipping GPU drivers"
+            warn "Could not detect GPU vendor — skipping driver install"
+            warn "Install manually: mesa + vulkan-intel / vulkan-radeon / nvidia-open"
             ;;
     esac
 }
@@ -347,7 +353,8 @@ enable_services() {
     sudo systemctl enable --now bluetooth
     sudo systemctl enable --now firewalld
     sudo systemctl enable --now cups
-systemctl --user enable --now gamemode 2>/dev/null || true
+    systemctl --user enable --now gamemode 2>/dev/null || true
+    sudo systemctl enable sddm
     ok "Services enabled (sddm will start on next boot)"
 }
 
@@ -575,29 +582,6 @@ EOF
     ok "gtk-settings-watch.sh written to $hypr_scripts"
 }
 
-# ─── 8b. Terminal config ──────────────────────────────────────────────────────
-setup_terminal() {
-    section "Ghostty terminal config"
-
-    local ghostty_dir="$HOME/.config/ghostty"
-    mkdir -p "$ghostty_dir"
-
-    cat > "$ghostty_dir/config" << 'EOF'
-font-family = JetBrainsMono Nerd Font
-font-size = 13
-
-theme = catppuccin-mocha
-background-opacity = 0.8
-
-keybind = ctrl+shift+v=ignore
-keybind = performable:ctrl+v=paste_from_clipboard
-keybind = ctrl+shift+c=ignore
-keybind = performable:ctrl+c=copy_to_clipboard
-EOF
-
-    ok "Ghostty config written"
-}
-
 # ─── 9. Default shell ─────────────────────────────────────────────────────────
 setup_shell() {
     section "Default shell"
@@ -663,7 +647,6 @@ main() {
     setup_gaming
     setup_zram
     setup_scripts
-    setup_terminal
     setup_shell
     setup_dotfiles
 
