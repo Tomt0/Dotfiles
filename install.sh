@@ -5,6 +5,10 @@
 #
 # Based on the original work by ViegPhunt
 # https://github.com/ViegPhunt/Arch-Hyprland
+#
+# Detects whether Hyprland is already installed and acts accordingly:
+#   Fresh install  — full setup from scratch, clones dotfiles from GitHub
+#   Existing setup — resolves tool conflicts, backs up configs, applies dotfiles
 
 set -uo pipefail
 
@@ -21,107 +25,29 @@ section() { echo -e "\n${BOLD}${CYAN}══ $* ══${RESET}"; }
 [[ $EUID -eq 0 ]] && die "Run as your regular user, not root. The script calls sudo where needed."
 command -v pacman &>/dev/null || die "This script requires Arch Linux."
 
-# ─── Package lists ────────────────────────────────────────────────────────────
+# ─── Mode detection ───────────────────────────────────────────────────────────
+if command -v hyprctl &>/dev/null; then
+    MODE="apply"
+else
+    MODE="fresh"
+fi
 
-PACMAN_PACKAGES=(
-    # Hyprland & Wayland core
-    hyprland hypridle hyprlock hyprpolkitagent hyprshot
-    waybar swaync grim slurp kanshi swaybg
-    xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
-    xdg-utils xdg-user-dirs
-    # Note: xdg-desktop-portal-wlr conflicts with xdg-desktop-portal-kde.
-    # It is installed below only if kde portal is not already present.
-
-    # Qt theming (qt5ct/qt6ct + kvantum style engine)
-    qt5ct qt6ct qt5-wayland qt6-wayland
-    kvantum kvantum-qt5
-
-
-    # Terminal & shell
-    ghostty zsh zsh-completions tmux
-
-    # Fonts
-    ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk
-
-    # Theming
-    nwg-look papirus-icon-theme gtk-engine-murrine
-
-    # Audio
-    wireplumber
-
-    # Polkit
-    polkit-gnome
-
-    # File manager & desktop utils
-    nemo gvfs gvfs-afc gvfs-mtp gvfs-smb ark
-    loupe celluloid evince gnome-disk-utility gnome-text-editor gnome-characters
-
-    # Networking
-    networkmanager network-manager-applet wpa_supplicant firewalld
-
-    # Bluetooth
-    bluez bluez-utils blueman
-
-    # Audio
-    pipewire-audio pipewire-pulse pavucontrol alsa-firmware sof-firmware
-
-    # Clipboard
-    cliphist wl-clipboard
-
-    # Input method
-    fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool fcitx5-bamboo
-
-    # Brightness (media keys — also useful for monitors with DDC/CI)
-    brightnessctl
-
-    # Wallpaper effects dependency
-    libvips
-
-    # Developer tools
-    neovim vim nano
-    git wget rsync stow
-    base-devel cmake ccache gperf patchelf
-    npm python-pip python-pipx rustup
-    github-cli
-
-    # CLI tools
-    bat eza fd fzf zoxide
-    lazygit lazydocker
-    fastfetch htop btop inotify-tools smartmontools
-
-    # Media
-    obs-studio ffmpeg cava playerctl
-
-    # Gaming / performance
-    gamemode
-
-    # Security / CTF tools
-    strace ltrace binwalk checksec upx
-
-    # Printing
-    cups cups-pk-helper system-config-printer
-
-    # Firewall GUI
-    firewall-config
-
-    # Misc
-    flatpak fuse2 dpkg
-    zram-generator yad
-    man-db unzip zip
-    keepass
+# ─── Conflict map (apply mode only) ──────────────────────────────────────────
+declare -A CONFLICTS=(
+    ["walker"]="rofi rofi-wayland rofi-emoji wofi bemenu fuzzel tofi"
+    ["awww"]="swww swaybg hyprpaper feh nitrogen mpvpaper"
+    ["swaync"]="mako dunst"
+    ["hyprlock"]="swaylock swaylock-effects waylock gtklock"
+    ["waybar"]="eww yambar"
 )
 
+# ─── Package lists ────────────────────────────────────────────────────────────
 AUR_PACKAGES=(
     # Hyprland extras
-    wlogout
-    awww
-    uwsm
+    wlogout awww uwsm
 
-    # App launcher
-    walker
-    elephant-bin
-    elephant-desktopapplications-bin
-    elephant-menus-bin
+    # App launcher + backend
+    walker elephant-bin elephant-desktopapplications-bin elephant-menus-bin
 
     # Browsers
     brave-bin
@@ -131,14 +57,8 @@ AUR_PACKAGES=(
 
     # Theming
     sddm-astronaut-theme
-    catppuccin-gtk-theme-mocha
-    catppuccin-qt5ct-git
-    kvantum-theme-catppuccin-git
-    ttf-segoe-ui-variable
-    whitesur-icon-theme
-    moga-neon-cursor-theme
-    apple_cursor
-    tint
+    catppuccin-gtk-theme-mocha catppuccin-qt5ct-git kvantum-theme-catppuccin-git
+    ttf-segoe-ui-variable whitesur-icon-theme moga-neon-cursor-theme apple_cursor tint
 
     # Shell prompt
     oh-my-posh
@@ -150,28 +70,64 @@ AUR_PACKAGES=(
     spotify
 
     # Gaming
-    xpadneo-dkms
-    balatro-mod-manager-bin
+    xpadneo-dkms balatro-mod-manager-bin
 
     # Fun CLI
-    pokemon-colorscripts-git
-    pipes.sh
-    cbonsai
-    cmatrix
+    pokemon-colorscripts-git pipes.sh cbonsai cmatrix
 
     # Misc
-    localsend
-    ani-cli
-    ascii
-    neocities
-
+    localsend ani-cli ascii neocities
 )
-# yay is intentionally omitted here — install_yay() handles it before this list runs.
+
+# ─── Intro ────────────────────────────────────────────────────────────────────
+echo -e "${BOLD}${CYAN}"
+echo "  ╔════════════════════════════════════════════╗"
+echo "  ║     Tomt0's Desktop Install — Arch Linux  ║"
+echo "  ║   Hyprland · Catppuccin Mocha · Waybar    ║"
+echo "  ╚════════════════════════════════════════════╝"
+echo -e "${RESET}"
+
+if [[ "$MODE" == "fresh" ]]; then
+    echo -e "${CYAN}  Detected: fresh install${RESET}"
+    echo ""
+    echo -e "${YELLOW}  This script will:${RESET}"
+    echo "    • Install 90+ packages from pacman and the AUR"
+    echo "    • Back up then overwrite your ~/.config/ and ~/.zshrc"
+    echo "    • Change your default shell to zsh"
+    echo "    • Hyprland will be available at your login screen after reboot"
+    echo ""
+    echo -e "${YELLOW}  Expect 30–60 minutes depending on your internet speed.${RESET}"
+else
+    echo -e "${CYAN}  Detected: existing Hyprland install${RESET}"
+    echo ""
+    echo -e "${YELLOW}  This script will:${RESET}"
+    echo "    • Remove tools that conflict with these dotfiles (see below)"
+    echo "    • Install any missing packages (skips already-installed ones)"
+    echo "    • Back up your existing ~/.config entries to ~/.config-backup-<timestamp>"
+    echo "    • Replace configs — your monitors.conf will NOT be touched"
+    echo "    • Enable services, set up zsh, zram, gaming opts, SDDM"
+    echo ""
+
+    # Scan and show conflicts before the prompt
+    _found=0
+    for _rep in "${!CONFLICTS[@]}"; do
+        for _pkg in ${CONFLICTS[$_rep]}; do
+            if pacman -Qi "$_pkg" &>/dev/null; then
+                warn "Conflict: $_pkg will be removed → replaced by $_rep"
+                _found=1
+            fi
+        done
+    done
+    [[ $_found -eq 1 ]] && echo ""
+fi
+
+read -rp "  Continue? [y/N] " _confirm
+[[ "$_confirm" =~ ^[Yy]$ ]] || { info "Aborted."; exit 0; }
+echo ""
 
 # ─── 0. Multilib ──────────────────────────────────────────────────────────────
 enable_multilib() {
-    section "Enabling multilib repo"
-
+    section "Multilib repo"
     if grep -q '^\[multilib\]' /etc/pacman.conf; then
         ok "multilib already enabled"
     else
@@ -179,32 +135,27 @@ enable_multilib() {
         sudo sed -i '/^\[multilib\]/{n;s/^#Include/Include/}' /etc/pacman.conf
         ok "multilib enabled"
     fi
-
     sudo pacman -Syu --noconfirm
     ok "Package databases refreshed and system upgraded"
 }
 
-# ─── 0b. Conflict check ───────────────────────────────────────────────────────
-check_conflicts() {
-    section "Conflict check"
-
+# ─── 0b. Portal conflict check ────────────────────────────────────────────────
+check_portal_conflicts() {
+    section "Portal conflict check"
     SKIP_WLR_PORTAL=0
-
     if pacman -Qi xdg-desktop-portal-kde &>/dev/null; then
         warn "xdg-desktop-portal-kde detected — skipping xdg-desktop-portal-wlr"
         SKIP_WLR_PORTAL=1
     fi
-
     if pacman -Qi xdg-desktop-portal-gnome &>/dev/null; then
         warn "xdg-desktop-portal-gnome detected — skipping xdg-desktop-portal-wlr"
-        warn "If screen sharing breaks in Hyprland later, run: sudo pacman -R xdg-desktop-portal-gnome"
+        warn "If screen sharing breaks later, run: sudo pacman -R xdg-desktop-portal-gnome"
         SKIP_WLR_PORTAL=1
     fi
-
-    ok "Conflict check done"
+    ok "Portal check done"
 }
 
-# ─── 1. yay ───────────────────────────────────────────────────────────────────
+# ─── 1a. yay (fresh only) ─────────────────────────────────────────────────────
 install_yay() {
     section "AUR helper (yay)"
     if command -v yay &>/dev/null; then
@@ -220,7 +171,25 @@ install_yay() {
     ok "yay installed"
 }
 
-# ─── 3. Packages ──────────────────────────────────────────────────────────────
+# ─── 1b. Resolve tool conflicts (apply only) ──────────────────────────────────
+resolve_conflicts() {
+    section "Resolving conflicts"
+    local to_remove=()
+    for replacement in "${!CONFLICTS[@]}"; do
+        for pkg in ${CONFLICTS[$replacement]}; do
+            pacman -Qi "$pkg" &>/dev/null && to_remove+=("$pkg")
+        done
+    done
+    if [[ ${#to_remove[@]} -eq 0 ]]; then
+        ok "No conflicts found"
+        return
+    fi
+    info "Removing: ${to_remove[*]}"
+    sudo pacman -Rns --noconfirm "${to_remove[@]}" 2>&1 && ok "Conflicts removed" \
+        || warn "Some packages could not be removed — continuing"
+}
+
+# ─── 2. Packages ──────────────────────────────────────────────────────────────
 install_packages() {
     local failed=()
 
@@ -238,12 +207,9 @@ install_packages() {
     pacman_group "Hyprland core" \
         hyprland hypridle hyprlock hyprpolkitagent hyprshot \
         waybar swaync grim slurp kanshi swaybg \
-        xdg-desktop-portal-hyprland xdg-desktop-portal-gtk xdg-utils \
-        xdg-user-dirs
+        xdg-desktop-portal-hyprland xdg-desktop-portal-gtk xdg-utils xdg-user-dirs
 
-    pacman_group "Qt theming" \
-        qt5ct qt6ct qt5-wayland qt6-wayland \
-        kvantum kvantum-qt5
+    pacman_group "Qt theming" qt5ct qt6ct qt5-wayland qt6-wayland kvantum kvantum-qt5
 
     pacman_group "Terminal & shell" ghostty zsh zsh-completions tmux
 
@@ -312,20 +278,18 @@ install_packages() {
     fi
 }
 
-# ─── 4. Services ──────────────────────────────────────────────────────────────
+# ─── 3. Services ──────────────────────────────────────────────────────────────
 enable_services() {
     section "System services"
-
     if systemctl is-active --quiet NetworkManager; then
         ok "NetworkManager already running"
-    elif systemctl is-active --quiet iwd || systemctl is-active --quiet dhcpcd || systemctl is-active --quiet systemd-networkd; then
-        warn "Another network manager is active — not touching networking to avoid losing your connection"
-        warn "After reboot you can switch to NetworkManager manually if desired"
+    elif systemctl is-active --quiet iwd || systemctl is-active --quiet dhcpcd \
+      || systemctl is-active --quiet systemd-networkd; then
+        warn "Another network manager is active — not touching networking"
         sudo systemctl enable NetworkManager
     else
         sudo systemctl enable --now NetworkManager
     fi
-
     sudo systemctl enable --now bluetooth
     sudo systemctl enable --now firewalld
     sudo systemctl enable --now cups
@@ -336,16 +300,13 @@ enable_services() {
 # ─── 4. Gaming optimizations ──────────────────────────────────────────────────
 setup_gaming() {
     section "Gaming optimizations"
-
     sudo tee /etc/sysctl.d/99-gaming.conf > /dev/null << 'EOF'
 vm.nr_hugepages=128
 EOF
-
     sudo tee /etc/security/limits.d/99-gaming.conf > /dev/null << 'EOF'
 @users - rtprio 95
 @users - memlock unlimited
 EOF
-
     sudo sysctl --system
     ok "hugepages + realtime audio priority configured"
 }
@@ -353,12 +314,10 @@ EOF
 # ─── 5. zram ──────────────────────────────────────────────────────────────────
 setup_zram() {
     section "zram swap"
-
     if [[ -f /etc/systemd/zram-generator.conf ]]; then
         ok "zram already configured"
         return
     fi
-
     sudo tee /etc/systemd/zram-generator.conf > /dev/null << 'EOF'
 [zram0]
 zram-size = ram / 2
@@ -367,32 +326,28 @@ EOF
     ok "zram configured (ram/2, zstd)"
 }
 
-# ─── 7. Scripts ───────────────────────────────────────────────────────────────
+# ─── 6. Scripts ───────────────────────────────────────────────────────────────
 setup_scripts() {
     section "viegphunt scripts"
 
     local dir="$HOME/.config/viegphunt"
     mkdir -p "$dir"
 
-    # ── App launcher (Super+A) ────────────────────────────────────────────────
     cat > "$dir/app_launcher.sh" << 'EOF'
 #!/usr/bin/env bash
 walker
 EOF
 
-    # ── Clipboard picker (Super+V) ────────────────────────────────────────────
     cat > "$dir/clipboard_launcher.sh" << 'EOF'
 #!/usr/bin/env bash
 walker -m clipboard
 EOF
 
-    # ── Emoji picker (Super+.) ────────────────────────────────────────────────
     cat > "$dir/emoji_launcher.sh" << 'EOF'
 #!/usr/bin/env bash
 walker -m emojis
 EOF
 
-    # ── Lock screen (Super+L) ─────────────────────────────────────────────────
     cat > "$dir/lock.sh" << 'EOF'
 #!/usr/bin/env bash
 current_wallpaper=$(/usr/bin/awww query | grep -oP "(?<=image: ).*" | head -1)
@@ -400,7 +355,6 @@ ln -sf "$current_wallpaper" "$HOME/.cache/hyprlock_wallpaper"
 pidof hyprlock || hyprlock --grace 0
 EOF
 
-    # ── GTK theme apply ───────────────────────────────────────────────────────
     cat > "$dir/gtkthemes.sh" << 'EOF'
 #!/usr/bin/env bash
 SCHEME="prefer-dark"
@@ -416,7 +370,6 @@ ${SCHEMA} font-name "$UI_FONT"
 ${SCHEMA} monospace-font-name "$MONO_FONT"
 EOF
 
-    # ── Cursor theme setup ────────────────────────────────────────────────────
     cat > "$dir/setcursor.sh" << 'EOF'
 #!/usr/bin/env bash
 mkdir -p ~/.icons/default/
@@ -428,7 +381,6 @@ sudo mkdir -p /usr/share/icons/default
 sudo cp ~/.icons/default/index.theme /usr/share/icons/default/index.theme
 EOF
 
-    # ── Keybinding hint overlay (Super+H) ─────────────────────────────────────
     cat > "$dir/key_hints.sh" << 'EOF'
 #!/usr/bin/env bash
 if pidof yad > /dev/null; then pkill yad; fi
@@ -461,39 +413,11 @@ yad --center --title="Keybinding Hints" --no-buttons --list \
 "  Shift [1-0]"    "  "  "Move window to workspace 1-10"
 EOF
 
-    # ── Backup dotfiles before stow ───────────────────────────────────────────
-    cat > "$dir/backup_config.sh" << 'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-timestamp=$(date +"%Y%m%d-%H%M%S")
-backup_dir="$HOME/.backup-$timestamp"
-dotfiles_root="$(pwd)"
-echo "==> Backing up existing config files before stowing"
-echo "==> Backup will be saved to: $backup_dir"
-mkdir -p "$backup_dir"
-targets=(".zshrc" ".tmux.conf")
-while IFS= read -r -d '' dir; do
-    targets+=("${dir#$dotfiles_root/}")
-done < <(find "$dotfiles_root/.config" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null || true)
-for target in "${targets[@]}"; do
-    src="$HOME/$target"
-    if [[ -e "$src" && ! -L "$src" ]]; then
-        dest="$backup_dir/$target"
-        mkdir -p "$(dirname "$dest")"
-        mv "$src" "$dest"
-        echo "-> Backed up: $target"
-    fi
-done
-echo "Backup completed to $backup_dir"
-EOF
-
-    # ── Wallpaper selector ────────────────────────────────────────────────────
     cat > "$dir/wallpaper_select.sh" << 'EOF'
 #!/usr/bin/env bash
 waypaper
 EOF
 
-    # ── Random wallpaper (Super+Shift+W) ──────────────────────────────────────
     cat > "$dir/wallpaper_random.sh" << 'EOF'
 #!/usr/bin/env bash
 wallpapers_dir="$HOME/Pictures/Wallpapers"
@@ -502,7 +426,6 @@ awww img "$random_wallpaper" --transition-type any --transition-duration 2
 ~/.config/viegphunt/wallpaper_effects.sh
 EOF
 
-    # ── Wallpaper effects (blur cache for hyprlock) ───────────────────────────
     cat > "$dir/wallpaper_effects.sh" << 'EOF'
 #!/usr/bin/env bash
 current_wallpaper_path=$(awww query | head -n 1 | awk -F'image: ' '/image:/ {print $2; exit}')
@@ -513,11 +436,9 @@ vipsthumbnail "$current_wallpaper_path" -o "$destination_wallpaper_dir/normal.pn
 EOF
 
     chmod +x "$dir"/*.sh
-    mkdir -p "$HOME/Pictures/Wallpapers"
-    mkdir -p "$HOME/Pictures/Screenshots"
-    ok "All viegphunt scripts written to $dir"
+    mkdir -p "$HOME/Pictures/Wallpapers" "$HOME/Pictures/Screenshots"
+    ok "Scripts written to $dir"
 
-    # ── gtk-settings-watch.sh (Hyprland script) ───────────────────────────────
     local hypr_scripts="$HOME/.config/hypr/scripts"
     mkdir -p "$hypr_scripts"
     cat > "$hypr_scripts/gtk-settings-watch.sh" << 'EOF'
@@ -544,12 +465,12 @@ inotifywait -m -e close_write "$SETTINGS" 2>/dev/null | while read -r; do
 done
 EOF
     chmod +x "$hypr_scripts/gtk-settings-watch.sh"
-    ok "gtk-settings-watch.sh written to $hypr_scripts"
+    ok "gtk-settings-watch.sh written"
 }
 
-# ─── 8. Display manager ───────────────────────────────────────────────────────
+# ─── 7. Display manager ───────────────────────────────────────────────────────
 setup_display_manager() {
-    section "Display manager (SDDM + UWSM session entry)"
+    section "Display manager"
 
     sudo systemctl enable sddm
     ok "sddm enabled"
@@ -561,10 +482,10 @@ Current=sddm-astronaut-theme
 EOF
     ok "SDDM theme set to sddm-astronaut-theme"
 
-    local session_dir="/usr/share/wayland-sessions"
-    sudo mkdir -p "$session_dir"
-
-    sudo tee "$session_dir/hyprland-uwsm.desktop" > /dev/null << 'EOF'
+    local session_file="/usr/share/wayland-sessions/hyprland-uwsm.desktop"
+    if [[ ! -f "$session_file" ]]; then
+        sudo mkdir -p /usr/share/wayland-sessions
+        sudo tee "$session_file" > /dev/null << 'EOF'
 [Desktop Entry]
 Name=Hyprland (UWSM)
 Comment=An intelligent dynamic tiling Wayland compositor
@@ -572,27 +493,27 @@ Exec=uwsm start -- hyprland
 DesktopNames=Hyprland
 Type=Application
 EOF
-    ok "Wayland session entry written to $session_dir/hyprland-uwsm.desktop"
+        ok "Wayland session entry written"
+    else
+        ok "Session entry already exists"
+    fi
 }
 
-# ─── 9. Default shell ─────────────────────────────────────────────────────────
+# ─── 8. Shell ─────────────────────────────────────────────────────────────────
 setup_shell() {
     section "Default shell"
-
     if [[ "$SHELL" == */zsh ]]; then
         ok "zsh is already the default shell"
         return
     fi
-
-    local zsh_path
-    zsh_path=$(command -v zsh)
-    info "Changing your default shell to zsh — you may be prompted for your password"
+    local zsh_path; zsh_path=$(command -v zsh)
+    info "Changing default shell to zsh — you may be prompted for your password"
     chsh -s "$zsh_path"
     ok "Default shell set to zsh (takes effect on next login)"
 }
 
-# ─── 10. Dotfiles ─────────────────────────────────────────────────────────────
-setup_dotfiles() {
+# ─── 9a. Dotfiles — fresh install ─────────────────────────────────────────────
+setup_dotfiles_fresh() {
     section "Dotfiles"
 
     local repo="https://github.com/Tomt0/Dotfiles.git"
@@ -606,7 +527,7 @@ setup_dotfiles() {
         git clone "$repo" "$dotfiles"
     fi
 
-    info "Backing up any existing configs that will be overwritten..."
+    info "Backing up existing configs..."
     local backup="$HOME/.config-backup-$(date +%Y%m%d-%H%M%S)"
     mkdir -p "$backup"
     while IFS= read -r -d '' src_dir; do
@@ -618,7 +539,7 @@ setup_dotfiles() {
     done
     ok "Backup saved to $backup"
 
-    info "Applying configs to ~/.config/ ..."
+    info "Applying configs..."
     rsync -a --exclude='*.swp' "$dotfiles/.config/" "$HOME/.config/"
     ok ".config applied"
 
@@ -626,36 +547,92 @@ setup_dotfiles() {
         [[ -f "$dotfiles/$f" ]] && cp "$dotfiles/$f" "$HOME/$f" && ok "$f applied"
     done
 
-    info "Copying wallpapers to ~/Pictures/Wallpapers/ ..."
-    mkdir -p "$HOME/Pictures/Wallpapers"
+    info "Copying wallpapers..."
     rsync -a "$dotfiles/wallpapers/" "$HOME/Pictures/Wallpapers/"
     ok "Wallpapers applied"
 }
 
+# ─── 9b. Dotfiles — existing install ──────────────────────────────────────────
+setup_dotfiles_apply() {
+    section "Dotfiles"
+
+    local dotfiles
+    dotfiles="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    info "Backing up existing configs..."
+    local backup="$HOME/.config-backup-$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$backup"
+    local dirs=(
+        hypr waybar swaync walker ghostty nvim ohmyposh
+        qt5ct qt6ct Kvantum gtk-3.0 gtk-4.0 wlogout
+        cava mpv nwg-look waypaper viegphunt
+    )
+    for d in "${dirs[@]}"; do
+        [[ -d "$HOME/.config/$d" ]] && cp -r "$HOME/.config/$d" "$backup/$d" \
+            && info "Backed up: ~/.config/$d"
+    done
+    for f in .zshrc .tmux.conf; do
+        [[ -f "$HOME/$f" ]] && cp "$HOME/$f" "$backup/$f" && info "Backed up: ~/$f"
+    done
+    ok "Backup saved to $backup"
+
+    info "Applying configs..."
+    local copy_dirs=(
+        waybar swaync walker ghostty nvim ohmyposh
+        qt5ct qt6ct Kvantum gtk-3.0 gtk-4.0 wlogout
+        cava mpv nwg-look waypaper
+    )
+    for d in "${copy_dirs[@]}"; do
+        if [[ -d "$dotfiles/.config/$d" ]]; then
+            rm -rf "$HOME/.config/$d"
+            cp -r "$dotfiles/.config/$d" "$HOME/.config/$d"
+            ok "$d"
+        fi
+    done
+
+    # Hypr: copy everything except monitors.conf
+    mkdir -p "$HOME/.config/hypr"
+    local hypr_src="$dotfiles/.config/hypr"
+    find "$hypr_src" -mindepth 1 | while IFS= read -r src; do
+        local rel="${src#$hypr_src/}"
+        local dst="$HOME/.config/hypr/$rel"
+        if [[ -d "$src" ]]; then
+            mkdir -p "$dst"
+        elif [[ "$rel" == "conf/monitors.conf" ]]; then
+            info "Skipping monitors.conf — keeping yours"
+        else
+            cp "$src" "$dst"
+            ok "hypr/$rel"
+        fi
+    done
+
+    for f in .zshrc .tmux.conf; do
+        [[ -f "$dotfiles/$f" ]] && cp "$dotfiles/$f" "$HOME/$f" && ok "$f"
+    done
+
+    info "Copying wallpapers..."
+    rsync -a "$dotfiles/wallpapers/" "$HOME/Pictures/Wallpapers/"
+    ok "Wallpapers applied"
+}
+
+# ─── 10. Apply themes ─────────────────────────────────────────────────────────
+apply_themes() {
+    section "Applying themes"
+    bash "$HOME/.config/viegphunt/gtkthemes.sh" && ok "GTK theme applied"
+    bash "$HOME/.config/viegphunt/setcursor.sh" && ok "Cursor theme applied"
+}
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 main() {
-    echo -e "${BOLD}${CYAN}"
-    echo "  ╔════════════════════════════════════════════╗"
-    echo "  ║     Tomt0's Desktop Install — Arch Linux  ║"
-    echo "  ║   Hyprland · Catppuccin Mocha · Waybar    ║"
-    echo "  ╚════════════════════════════════════════════╝"
-    echo -e "${RESET}"
-
-    echo -e "${YELLOW}  This script will:${RESET}"
-    echo "    • Install 90+ packages from pacman and the AUR"
-    echo "    • Back up then overwrite your ~/.config/ and ~/.zshrc"
-    echo "    • Change your default shell to zsh"
-    echo "    • Hyprland will be available at your login screen after reboot"
-    echo ""
-    echo -e "${YELLOW}  Expect 30–60 minutes depending on your internet speed.${RESET}"
-    echo ""
-    read -rp "  Continue? [y/N] " _confirm
-    [[ "$_confirm" =~ ^[Yy]$ ]] || { info "Aborted."; exit 0; }
-    echo ""
-
     enable_multilib
-    check_conflicts
-    install_yay
+    check_portal_conflicts
+
+    if [[ "$MODE" == "fresh" ]]; then
+        install_yay
+    else
+        resolve_conflicts
+    fi
+
     install_packages
     enable_services
     setup_gaming
@@ -663,12 +640,23 @@ main() {
     setup_scripts
     setup_display_manager
     setup_shell
-    setup_dotfiles
+
+    if [[ "$MODE" == "fresh" ]]; then
+        setup_dotfiles_fresh
+    else
+        setup_dotfiles_apply
+        apply_themes
+    fi
 
     echo ""
-    echo -e "${BOLD}${GREEN}  ✓ Installation complete!${RESET}"
+    echo -e "${BOLD}${GREEN}  ✓ Done!${RESET}"
     echo ""
-    echo "  Reboot and log into Hyprland."
+    if [[ "$MODE" == "fresh" ]]; then
+        echo "  Reboot and log into Hyprland."
+    else
+        echo "  Log out and back in (or reboot) to see all changes."
+        echo "  Wallpapers go in ~/Pictures/Wallpapers/"
+    fi
     echo ""
 }
 
