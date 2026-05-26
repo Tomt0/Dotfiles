@@ -207,7 +207,7 @@ install_packages() {
     section "Pacman packages"
 
     pacman_group "Hyprland core" \
-        hyprland hypridle hyprlock hyprpolkitagent hyprshot \
+        hyprland hypridle hyprlock hyprshot \
         waybar swaync grim slurp kanshi swaybg \
         xdg-desktop-portal-hyprland xdg-desktop-portal-gtk xdg-utils xdg-user-dirs
 
