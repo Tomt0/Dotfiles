@@ -594,7 +594,7 @@ setup_dotfiles_apply() {
     local dirs=(
         hypr waybar swaync walker ghostty nvim ohmyposh
         qt5ct qt6ct Kvantum gtk-3.0 gtk-4.0 wlogout
-        cava mpv nwg-look waypaper viegphunt
+        cava mpv nwg-look waypaper viegphunt elephant
     )
     for d in "${dirs[@]}"; do
         [[ -d "$HOME/.config/$d" ]] && cp -r "$HOME/.config/$d" "$backup/$d" \
@@ -609,7 +609,7 @@ setup_dotfiles_apply() {
     local copy_dirs=(
         waybar swaync walker ghostty nvim ohmyposh
         qt5ct qt6ct Kvantum gtk-3.0 gtk-4.0 wlogout
-        cava mpv nwg-look waypaper
+        cava mpv nwg-look waypaper elephant
     )
     for d in "${copy_dirs[@]}"; do
         if [[ -d "$dotfiles/.config/$d" ]]; then
