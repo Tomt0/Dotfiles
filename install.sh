@@ -296,6 +296,8 @@ enable_services() {
     sudo systemctl enable --now firewalld
     sudo systemctl enable --now cups
     systemctl --user enable --now gamemode 2>/dev/null || true
+    elephant service enable 2>/dev/null || true
+    systemctl --user start elephant 2>/dev/null || true
     ok "Services enabled"
 }
 
