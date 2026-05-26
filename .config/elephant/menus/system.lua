@@ -47,14 +47,6 @@ function GetEntries()
   local apps, seen = {}, {}
 
   table.insert(apps, {
-    Text    = "GTK Theme",
-    Icon    = "preferences-desktop-theme",
-    Subtext = "Change GTK theme, icons, fonts, cursor",
-    Actions = { activate = "nwg-look" },
-  })
-  seen["nwg-look"] = true
-
-  table.insert(apps, {
     Text    = "SDDM Theme",
     Icon    = "preferences-desktop-theme",
     Subtext = "Change login screen theme",
