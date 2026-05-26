@@ -31,6 +31,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Tomt0/Dotfiles/main/install.
   | mako, dunst | swaync |
   | swaylock, waylock, gtklock | hyprlock |
   | eww, yambar | waybar |
+  | polkit-kde-agent, hyprpolkitagent, mate-polkit | polkit-gnome |
 
 - Installs any missing packages (skips already-installed ones)
 - Backs up your existing `~/.config` entries to `~/.config-backup-<timestamp>`
@@ -38,6 +39,49 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Tomt0/Dotfiles/main/install.
 - Applies GTK and cursor themes immediately
 
 > **Note:** yay must already be installed for the existing-install path.
+
+## Packages
+
+### Pacman
+
+| Category | Packages |
+|----------|----------|
+| Hyprland core | hyprland, hypridle, hyprlock, hyprshot, waybar, swaync, grim, slurp, kanshi, swaybg |
+| XDG portals | xdg-desktop-portal-hyprland, xdg-desktop-portal-gtk, xdg-desktop-portal-wlr |
+| Terminal & shell | ghostty, zsh, zsh-completions, tmux |
+| Fonts | ttf-jetbrains-mono-nerd, noto-fonts, noto-fonts-cjk |
+| Theming | nwg-look, papirus-icon-theme, gtk-engine-murrine |
+| Qt theming | qt5ct, qt6ct, qt5-wayland, qt6-wayland, kvantum, kvantum-qt5 |
+| Polkit | polkit-gnome |
+| File manager | nemo, gvfs, gvfs-afc, gvfs-mtp, gvfs-smb, ark, loupe, celluloid, evince, gnome-disk-utility, gnome-text-editor |
+| Networking | networkmanager, network-manager-applet, wpa_supplicant, firewalld, firewall-config |
+| Bluetooth | bluez, bluez-utils, blueman |
+| Audio | pipewire-audio, pipewire-pulse, wireplumber, pavucontrol, alsa-firmware, sof-firmware |
+| Clipboard | cliphist, wl-clipboard |
+| Input method | fcitx5, fcitx5-gtk, fcitx5-qt, fcitx5-configtool, fcitx5-bamboo |
+| Media | obs-studio, ffmpeg, cava, playerctl |
+| Gaming | gamemode |
+| Dev tools | neovim, vim, nano, git, wget, rsync, stow, base-devel, cmake, npm, python-pipx, rustup, github-cli |
+| CLI tools | bat, eza, fd, fzf, zoxide, lazygit, lazydocker, fastfetch, htop, btop |
+| Security | strace, ltrace, binwalk, checksec, upx |
+| Printing | cups, cups-pk-helper, system-config-printer |
+| Misc | flatpak, fuse2, dpkg, zram-generator, yad, man-db, unzip, zip, keepass, brightnessctl, libvips |
+| Display manager | sddm |
+
+### AUR
+
+| Category | Packages |
+|----------|----------|
+| Hyprland extras | wlogout, awww, uwsm |
+| App launcher | walker, elephant-bin, elephant-desktopapplications-bin, elephant-menus-bin |
+| Browser | brave-bin |
+| Editor | sublime-text-4 |
+| Shell prompt | oh-my-posh |
+| Theming | sddm-astronaut-theme, catppuccin-gtk-theme-mocha, catppuccin-qt5ct-git, kvantum-theme-catppuccin-git, ttf-segoe-ui-variable, whitesur-icon-theme, moga-neon-cursor-theme, apple_cursor, tint |
+| Wallpaper | waypaper |
+| Communication | spotify, localsend |
+| Gaming | xpadneo-dkms, balatro-mod-manager-bin |
+| Fun CLI | pokemon-colorscripts-git, pipes.sh, cbonsai, cmatrix, ani-cli, ascii, neocities |
 
 ## Keybindings
 
