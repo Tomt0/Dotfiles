@@ -186,21 +186,25 @@ enable_multilib() {
         ok "multilib enabled"
     fi
 
-    sudo pacman -Sy --noconfirm
-    ok "Package databases refreshed"
+    sudo pacman -Syu --noconfirm
+    ok "Package databases refreshed and system upgraded"
 }
 
 # ─── 0b. Conflict check ───────────────────────────────────────────────────────
 check_conflicts() {
     section "Conflict check"
 
-    # xdg-desktop-portal-wlr conflicts with xdg-desktop-portal-kde
+    SKIP_WLR_PORTAL=0
+
     if pacman -Qi xdg-desktop-portal-kde &>/dev/null; then
-        warn "xdg-desktop-portal-kde is installed — skipping xdg-desktop-portal-wlr to avoid conflict."
-        warn "Hyprland will use xdg-desktop-portal-hyprland instead (this is fine)."
+        warn "xdg-desktop-portal-kde detected — skipping xdg-desktop-portal-wlr"
         SKIP_WLR_PORTAL=1
-    else
-        SKIP_WLR_PORTAL=0
+    fi
+
+    if pacman -Qi xdg-desktop-portal-gnome &>/dev/null; then
+        warn "xdg-desktop-portal-gnome detected — skipping xdg-desktop-portal-wlr"
+        warn "If screen sharing breaks in Hyprland later, run: sudo pacman -R xdg-desktop-portal-gnome"
+        SKIP_WLR_PORTAL=1
     fi
 
     ok "Conflict check done"
@@ -317,7 +321,17 @@ install_packages() {
 # ─── 4. Services ──────────────────────────────────────────────────────────────
 enable_services() {
     section "System services"
-    sudo systemctl enable --now NetworkManager
+
+    if systemctl is-active --quiet NetworkManager; then
+        ok "NetworkManager already running"
+    elif systemctl is-active --quiet iwd || systemctl is-active --quiet dhcpcd || systemctl is-active --quiet systemd-networkd; then
+        warn "Another network manager is active — not touching networking to avoid losing your connection"
+        warn "After reboot you can switch to NetworkManager manually if desired"
+        sudo systemctl enable NetworkManager
+    else
+        sudo systemctl enable --now NetworkManager
+    fi
+
     sudo systemctl enable --now bluetooth
     sudo systemctl enable --now firewalld
     sudo systemctl enable --now cups
@@ -560,6 +574,7 @@ setup_shell() {
 
     local zsh_path
     zsh_path=$(command -v zsh)
+    info "Changing your default shell to zsh — you may be prompted for your password"
     chsh -s "$zsh_path"
     ok "Default shell set to zsh (takes effect on next login)"
 }
@@ -579,6 +594,18 @@ setup_dotfiles() {
         git clone "$repo" "$dotfiles"
     fi
 
+    info "Backing up any existing configs that will be overwritten..."
+    local backup="$HOME/.config-backup-$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$backup"
+    while IFS= read -r -d '' src_dir; do
+        local name; name=$(basename "$src_dir")
+        [[ -d "$HOME/.config/$name" ]] && cp -r "$HOME/.config/$name" "$backup/$name"
+    done < <(find "$dotfiles/.config" -mindepth 1 -maxdepth 1 -type d -print0)
+    for f in .zshrc .tmux.conf; do
+        [[ -f "$HOME/$f" ]] && cp "$HOME/$f" "$backup/$f"
+    done
+    ok "Backup saved to $backup"
+
     info "Applying configs to ~/.config/ ..."
     rsync -a --exclude='*.swp' "$dotfiles/.config/" "$HOME/.config/"
     ok ".config applied"
@@ -591,9 +618,6 @@ setup_dotfiles() {
     mkdir -p "$HOME/Pictures/Wallpapers"
     rsync -a "$dotfiles/wallpapers/" "$HOME/Pictures/Wallpapers/"
     ok "Wallpapers applied"
-
-    info "Applying GTK theme..."
-    bash "$HOME/.config/viegphunt/gtkthemes.sh" && ok "GTK theme applied"
 }
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -604,6 +628,18 @@ main() {
     echo "  ║   Hyprland · Catppuccin Mocha · Waybar    ║"
     echo "  ╚════════════════════════════════════════════╝"
     echo -e "${RESET}"
+
+    echo -e "${YELLOW}  This script will:${RESET}"
+    echo "    • Install 90+ packages from pacman and the AUR"
+    echo "    • Back up then overwrite your ~/.config/ and ~/.zshrc"
+    echo "    • Change your default shell to zsh"
+    echo "    • Hyprland will be available at your login screen after reboot"
+    echo ""
+    echo -e "${YELLOW}  Expect 30–60 minutes depending on your internet speed.${RESET}"
+    echo ""
+    read -rp "  Continue? [y/N] " _confirm
+    [[ "$_confirm" =~ ^[Yy]$ ]] || { info "Aborted."; exit 0; }
+    echo ""
 
     enable_multilib
     check_conflicts
