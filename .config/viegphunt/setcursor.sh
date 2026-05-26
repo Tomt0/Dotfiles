@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 mkdir -p ~/.icons/default/
-touch ~/.icons/default/index.theme
-echo "[icon theme]" >> ~/.icons/default/index.theme
-echo "Inherits=macOS" >> ~/.icons/default/index.theme
-sudo rm -rf /usr/share/icons/default/index.theme
+cat > ~/.icons/default/index.theme << 'EOF'
+[icon theme]
+Inherits=Moga-Neon-Cyan
+EOF
+sudo mkdir -p /usr/share/icons/default/
 sudo cp ~/.icons/default/index.theme /usr/share/icons/default/

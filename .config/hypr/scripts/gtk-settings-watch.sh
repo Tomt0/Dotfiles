@@ -20,7 +20,7 @@ apply_cursor() {
 }
 
 restart_polkit() {
-    pkill -x polkit-gnome-authenticat 2>/dev/null
+    pkill -x polkit-gnome-au 2>/dev/null
     sleep 0.3
     /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 }

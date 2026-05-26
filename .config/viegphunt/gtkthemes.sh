@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 SCHEME="prefer-dark"
-THEME="adw-gtk3-dark"
+THEME="catppuccin-mocha-sapphire-standard+default"
 ICONS="WhiteSur-dark"
-CURSOR="macOS"
+CURSOR="Moga-Neon-Cyan"
 UI_FONT="Segoe UI Variable Static Text 12"
 MONO_FONT="JetBrainsMono Nerd Font 12"
 
