@@ -3,7 +3,7 @@
 SCHEME="prefer-dark"
 THEME="catppuccin-mocha-sapphire-standard+default"
 ICONS="WhiteSur-dark"
-CURSOR="Moga-Neon-Cyan"
+CURSOR="Bibata-Modern-Ice"
 UI_FONT="Segoe UI Variable Static Text 12"
 MONO_FONT="JetBrainsMono Nerd Font 12"
 
