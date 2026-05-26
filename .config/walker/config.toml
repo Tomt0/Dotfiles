@@ -1,0 +1,15 @@
+force_keyboard_focus = true
+selection_wrap = true
+theme = "omarchy"
+hide_action_hints = true
+
+[placeholders]
+"default" = { input = " Search...", list = "No Results" }
+
+[keybinds]
+quick_activate = []
+
+[providers]
+max_results = 256
+default = ["desktopapplications"]
+empty = ["menus:categories"]

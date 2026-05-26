@@ -1,0 +1,30 @@
+* { all: unset; font-family: "JetBrains Mono", monospace; font-size: 16px; color: #cdd6f4; }
+
+scrollbar { opacity: 0; }
+.elephant-hint { opacity: 0; min-height: 0; min-width: 0; font-size: 0; }
+.keybinds, .global-keybinds, .item-keybinds { opacity: 0; min-height: 0; font-size: 0; }
+
+.box-wrapper {
+  background: alpha(#1e1e2e, 0.85);
+  padding: 20px;
+  border: 2px solid #94e2d5;
+}
+
+.search-container {
+  background: #313244;
+  padding: 10px;
+}
+
+.input placeholder { color: #585b70; }
+.input:focus, .input:active { box-shadow: none; outline: none; }
+
+child:selected { background: #353749; }
+child:selected .item-box * { color: #94e2d5; }
+
+.item-box { padding-left: 14px; }
+.item-text-box { padding: 12px 0; }
+.item-subtext { font-size: 11px; color: #585b70; margin-top: 1px; }
+child:selected .item-subtext { color: #6e9c94; }
+.large-icons { -gtk-icon-size: 32px; }
+.item-image { margin-right: 14px; -gtk-icon-transform: scale(0.9); }
+.preview { min-width: 200px; max-width: 200px; background: #181825; border-left: 1px solid #313244; }
