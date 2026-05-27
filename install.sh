@@ -542,9 +542,25 @@ EOF
         ok "SDDM bundled wallpapers copied to ~/Pictures/Wallpapers"
     fi
 
+    sudo mkdir -p /usr/share/wayland-sessions
+
+    local plain_file="/usr/share/wayland-sessions/hyprland.desktop"
+    if [[ ! -f "$plain_file" ]]; then
+        sudo tee "$plain_file" > /dev/null << 'EOF'
+[Desktop Entry]
+Name=Hyprland
+Comment=An intelligent dynamic tiling Wayland compositor
+Exec=Hyprland
+DesktopNames=Hyprland
+Type=Application
+EOF
+        ok "Plain Hyprland session entry written"
+    else
+        ok "Plain Hyprland session entry already exists"
+    fi
+
     local session_file="/usr/share/wayland-sessions/hyprland-uwsm.desktop"
     if [[ ! -f "$session_file" ]]; then
-        sudo mkdir -p /usr/share/wayland-sessions
         sudo tee "$session_file" > /dev/null << 'EOF'
 [Desktop Entry]
 Name=Hyprland (UWSM)
@@ -553,9 +569,9 @@ Exec=uwsm start -- hyprland
 DesktopNames=Hyprland
 Type=Application
 EOF
-        ok "Wayland session entry written"
+        ok "UWSM Hyprland session entry written"
     else
-        ok "Session entry already exists"
+        ok "UWSM session entry already exists"
     fi
 }
 
@@ -801,6 +817,7 @@ main() {
     resolve_conflicts
 
     install_packages
+    sudo mkinitcpio -P
     enable_services
     setup_laptop
     setup_gaming
