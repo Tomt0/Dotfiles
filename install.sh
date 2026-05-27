@@ -28,7 +28,6 @@ command -v pacman &>/dev/null || die "This script requires Arch Linux."
 # ─── Mode detection ───────────────────────────────────────────────────────────
 if command -v hyprctl &>/dev/null; then
     MODE="apply"
-    command -v yay &>/dev/null || die "yay is required for existing installs. Install it first: https://github.com/Jguer/yay"
 else
     MODE="fresh"
 fi
@@ -811,9 +810,7 @@ main() {
     check_firewall
     check_portal_conflicts
 
-    if [[ "$MODE" == "fresh" ]]; then
-        install_yay
-    fi
+    install_yay
     resolve_conflicts
 
     install_packages
